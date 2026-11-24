@@ -60,7 +60,7 @@ A thing is:
 
 A `Line` is a string or `{ speaker?, portrait?, sound?, text, choices? }`. `portrait` is an image shown beside the text; `sound` plays once when the line appears. A choice is `{ text, requires?, lines?, after? }`: `requires: (state) => boolean` hides it when false; picking it replaces the rest of the conversation with its `lines`, and its `after` runs before the thing's.
 
-`ctx` has `state`, `set(flag, value)`, `give(item)`, `take(item)`, `goto(levelId, tile?)` (tile defaults to that level's `spawn`), `play(src, volume?)`, `say(lines)` (opens dialogue, replacing any open one), and `wait(seconds, fn)` (`fn` gets the ctx current when it fires).
+`ctx` has `state`, `set(flag, value)`, `give(item)`, `take(item)`, `goto(levelId, tile?)` (tile defaults to that level's `spawn`), `play(src, volume?)`, `say(lines)` (opens dialogue, replacing any open one), and `wait(seconds, fn)` (`fn` gets the ctx current when it runs; if dialogue is open when the time is up, it waits for the dialogue to close, in order).
 
 In 3D the camera bobs with each step and sways slightly when standing still.
 

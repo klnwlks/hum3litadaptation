@@ -58,6 +58,12 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
     const pending = timers.current
     return () => pending.forEach(clearTimeout)
   }, [])
+  // Set synchronously wherever dialogue opens or closes, so a queued timer that opens one stops the drain.
+  const dialogueOpen = useRef(dialogue !== null)
+  const queued = useRef<((ctx: Ctx) => void)[]>([])
+  const drain = () => {
+    while (!dialogueOpen.current && ctxRef.current && queued.current.length > 0) queued.current.shift()!(ctxRef.current)
+  }
 
   // Keyed on line position so skipping the typewriter doesn't replay it.
   const lines = dialogue?.lines
@@ -93,14 +99,17 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         const next = levelById(levels, id)
         playerRef.current = { ...playerRef.current, pos: tileCenter(at ?? next.spawn) }
         setLevel(next)
-        setDialogue(opening(next, current))
+        const opened = opening(next, current)
+        dialogueOpen.current = opened !== null
+        setDialogue(opened)
       },
       play: playOnce,
       say: (ls) => start(resolve(ls, current), []),
       wait(seconds, fn) {
         const id = window.setTimeout(() => {
           timers.current.delete(id)
-          if (ctxRef.current) fn(ctxRef.current)
+          queued.current.push(fn)
+          drain()
         }, seconds * 1000)
         timers.current.add(id)
       },
@@ -108,6 +117,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
     ctxRef.current = ctx
 
     const start = (ls: Line[], after: Dialogue['after']) => {
+      dialogueOpen.current = ls.length > 0
       if (ls.length > 0) return setDialogue({ lines: ls, index: 0, startedAt: performance.now(), after, choice: 0 })
       setDialogue(null)
       for (const fn of after) fn(ctx)
@@ -145,6 +155,11 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [dialogue, items, level, levels, state])
+
+  // After the effect above, so drained timers get the fresh ctx.
+  useEffect(() => {
+    if (!dialogue) drain()
+  })
 
   return (
     <div className="relative h-screen w-screen bg-black">

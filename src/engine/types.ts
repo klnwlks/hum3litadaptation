@@ -27,7 +27,7 @@ export interface Ctx {
   play(src: string, volume?: number): void
   // Replaces any open dialogue.
   say(lines: Lines): void
-  // `fn` gets the ctx current when it fires.
+  // Waits for open dialogue to close; `fn` gets the ctx current when it runs.
   wait(seconds: number, fn: (ctx: Ctx) => void): void
 }
 
