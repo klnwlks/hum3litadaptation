@@ -3,12 +3,16 @@ import { defineLevel } from '../engine/level'
 
 const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.'
 
+// Placeholder frames: plain colored squares.
+const square = (color: string) =>
+  `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="${color}"/></svg>`)}`
+
 export const sample = defineLevel({
   id: 'sample',
   map: [
     '####X###########',
     '#......#.......#',
-    '#......#.......#',
+    '#..p...#.......#',
     '#......#.......#',
     '#..r...........#',
     '#......#.......#',
@@ -20,7 +24,8 @@ export const sample = defineLevel({
   tiles: {
     '#': { color: '#3a3a3a', solid: true },
     '.': { color: '#141414' },
-    X: { color: '#3a3a3a', solid: true, faces: { s: { color: '#5a0f0f', image: '/favicon.svg' } } },
+    X: { color: '#3a3a3a', solid: true, faces: { s: { color: '#5a0f0f', image: ['/favicon.svg', square('#5a0f0f')], fps: 2 } } },
+    p: { color: '#141414', image: [square('#141414'), square('#3a0a0a'), square('#141414'), square('#0a0a3a')], fps: 3 },
     r: { color: '#141414', ceiling: { color: '#4a0a0a', image: '/favicon.svg' } },
   },
   ceiling: { color: '#0d0d10', height: 1.5 },

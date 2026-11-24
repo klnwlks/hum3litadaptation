@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fullyRevealed, lineText, revealed, type Dialogue } from './dialogue'
+import { Flipbook } from './Flipbook'
 import type { Choice } from './types'
 
 export function DialogueBox({ dialogue, choices }: { dialogue: Dialogue; choices: Choice[] }) {
@@ -10,7 +11,7 @@ export function DialogueBox({ dialogue, choices }: { dialogue: Dialogue; choices
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">
       <div className="flex w-full max-w-3xl gap-4 border-4 border-white bg-black p-4 font-mono text-lg leading-relaxed text-white">
-        {portrait && <img src={portrait} alt="" className="size-24 shrink-0 object-contain [image-rendering:pixelated]" />}
+        {portrait && <Flipbook frames={portrait} className="size-24 shrink-0 object-contain [image-rendering:pixelated]" />}
         <div className="min-w-0 flex-1">
           {speaker && <h2 className="mb-1 font-bold">{speaker}</h2>}
           <p>{lineText(line).slice(0, revealed(dialogue, now))}</p>

@@ -5,7 +5,7 @@ import { useSoundscape } from './audio'
 import { axes, useHeldKeys } from './input'
 import { facingOf, move, PLAYER_SIZE, type Player } from './level'
 import { useLighting } from './lighting'
-import { box, litMaterial, plane } from './material'
+import { animateMaterials, box, litMaterial, plane } from './material'
 import type { Level, Look, Side, State, Thing, View } from './types'
 
 const SPEED = 4 // tiles/s
@@ -42,6 +42,7 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
   useSoundscape(level, things, state, playerRef)
 
   useFrame((three, dt) => {
+    animateMaterials(three.clock.elapsedTime)
     // Clamp so a stalled frame can't tunnel through walls.
     const step = Math.min(dt, 0.1)
     const before = tilt.current

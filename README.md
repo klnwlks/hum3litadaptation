@@ -23,7 +23,7 @@ Everything renders at 240 lines and is scaled up with crisp pixels.
 
 **State** is `{ flags, items, view }`, shared across levels. `view` is `'top'` or `'3d'` and flips halfway through the camera tilt. Any field typed `Dyn<T>` takes either a value or `(state) => value`, re-read on every render, so lines, lights, sounds, lighting, and effects can all change with the story or the view.
 
-**Looks.** Anything drawn takes `{ color, image? }`. `image` is a URL (e.g. a file in `public/`); `color` shows while it loads or if it fails. Tiles repeat the image once per tile on every side (tall walls tile it vertically) over the color. Image things, image players, and items are cut out where the image is transparent.
+**Looks.** Anything drawn takes `{ color, image?, fps? }`. `image` is a URL (e.g. a file in `public/`), or a list of URLs that loops at `fps` (default 8); `color` shows until every frame loads, or if any fails. Tiles repeat the image once per tile on every side (tall walls tile it vertically) over the color. Image things, image players, and items are cut out where the image is transparent. Dialogue `portrait` also takes a list (looping at 8 fps).
 
 A level is:
 

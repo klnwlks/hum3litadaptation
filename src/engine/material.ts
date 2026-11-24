@@ -9,9 +9,12 @@ import {
   ShaderMaterial,
   SRGBColorSpace,
   TextureLoader,
+  type Texture,
 } from 'three'
 import { lightingGlsl, lightingUniforms } from './lighting'
 import type { Look } from './types'
+
+export const DEFAULT_FPS = 8
 
 // stretch: once over the mesh, over the color. grid: once per tile, over the color.
 // sprite: once, cut out on alpha, lit as if flat.
@@ -66,10 +69,18 @@ void main() {
 
 const loader = new TextureLoader()
 const materials = new Map<string, ShaderMaterial>()
+const animated: { material: ShaderMaterial; frames: Texture[]; fps: number }[] = []
+
+// Call once per frame.
+export function animateMaterials(seconds: number) {
+  for (const a of animated) a.material.uniforms.uImage.value = a.frames[Math.floor(seconds * a.fps) % a.frames.length]
+}
 
 // Cached forever: looks are few.
 export function litMaterial(look: Look, mapping: Mapping): ShaderMaterial {
-  const key = `${look.color}|${look.image ?? ''}|${mapping}`
+  const urls = look.image === undefined ? [] : [look.image].flat()
+  const fps = look.fps ?? DEFAULT_FPS
+  const key = `${look.color}|${urls.join(',')}|${fps}|${mapping}`
   const cached = materials.get(key)
   if (cached) return cached
   const material = new ShaderMaterial({
@@ -79,22 +90,21 @@ export function litMaterial(look: Look, mapping: Mapping): ShaderMaterial {
     defines: mapping === 'grid' ? { GRID_UV: '' } : mapping === 'sprite' ? { SPRITE: '' } : {},
     side: mapping === 'sprite' ? DoubleSide : FrontSide,
   })
-  if (look.image) {
-    const url = look.image
-    loader.load(
-      url,
-      (texture) => {
+  // Color until every frame has loaded; any failure keeps the color.
+  Promise.all(urls.map((url) => loader.loadAsync(url)))
+    .then((frames) => {
+      if (frames.length === 0) return
+      for (const texture of frames) {
         texture.colorSpace = SRGBColorSpace
         texture.magFilter = NearestFilter
         texture.wrapS = texture.wrapT = RepeatWrapping
-        material.uniforms.uImage.value = texture
-        material.defines.USE_IMAGE = ''
-        material.needsUpdate = true
-      },
-      undefined,
-      () => console.warn(`image '${url}' failed to load; drawing its color instead`),
-    )
-  }
+      }
+      material.uniforms.uImage.value = frames[0]
+      material.defines.USE_IMAGE = ''
+      material.needsUpdate = true
+      if (frames.length > 1) animated.push({ material, frames, fps })
+    })
+    .catch(() => console.warn(`image '${urls.join(', ')}' failed to load; drawing its color instead`))
   materials.set(key, material)
   return material
 }

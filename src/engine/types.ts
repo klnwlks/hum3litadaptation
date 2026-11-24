@@ -35,7 +35,10 @@ export interface Choice {
   after?: (ctx: Ctx) => void
 }
 
-export type Line = string | { speaker?: string; portrait?: string; sound?: string; text: string; choices?: Choice[] }
+// A list of images loops at 8 fps.
+export type Frames = string | string[]
+
+export type Line = string | { speaker?: string; portrait?: Frames; sound?: string; text: string; choices?: Choice[] }
 export type Lines = Dyn<Line[]>
 
 export interface Sound {
@@ -50,7 +53,9 @@ export interface Emitter extends Sound {
 // Image draws over color on tiles and boxes, cut out on sprites; color shows until it loads.
 export interface Look {
   color: string
-  image?: string
+  image?: Frames
+  // Default 8.
+  fps?: number
 }
 
 export type Item = Look
