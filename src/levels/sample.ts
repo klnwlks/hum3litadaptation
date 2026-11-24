@@ -6,11 +6,11 @@ const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do e
 export const sample = defineLevel({
   id: 'sample',
   map: [
-    '################',
+    '####X###########',
     '#......#.......#',
     '#......#.......#',
     '#......#.......#',
-    '#..............#',
+    '#..r...........#',
     '#......#.......#',
     '###.####.......#',
     '#......#.......#',
@@ -20,11 +20,16 @@ export const sample = defineLevel({
   tiles: {
     '#': { color: '#3a3a3a', solid: true },
     '.': { color: '#141414' },
+    // Wall whose south side carries an image; only seen in 3D, from inside the left room.
+    X: { color: '#3a3a3a', solid: true, faces: { s: { color: '#5a0f0f', image: '/favicon.svg' } } },
+    // Floor with a different ceiling above it; only seen in 3D.
+    r: { color: '#141414', ceiling: { color: '#4a0a0a' } },
   },
+  ceiling: { color: '#0d0d10', height: 1.5 },
   spawn: { x: 3, y: 3 },
   enter: [LOREM],
-  // Dim room lit by the player; darker still once 'dolor' is set.
-  lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : 0.15, player: { radius: 4 } }),
+  // Dim room lit by the player; darker in 3D, darker still once 'dolor' is set.
+  lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : s.view === '3d' ? 0.08 : 0.15, player: { radius: 4 } }),
   // Constant film look; heavier distortion once 'dolor' is set.
   effects: (s) => ({
     vignette: 0.7,
@@ -41,6 +46,27 @@ export const sample = defineLevel({
       color: '#7a1f1f',
       lines: [{ speaker: 'Lorem', text: LOREM }, LOREM, { speaker: 'Ipsum', text: LOREM }],
     },
+    // Tall in 3D; from above, just a square. Says something else when looked at in 3D.
+    {
+      id: 'tall',
+      at: { x: 6, y: 1 },
+      color: '#202020',
+      height: 1.4,
+      lines: (s) => (s.view === '3d' ? [{ speaker: 'Ipsum', portrait: '/favicon.svg', text: LOREM }] : [LOREM]),
+    },
+    // Hangs from the ceiling; exists only in 3D. Non-solid: stand under it and interact.
+    {
+      id: 'hanging',
+      at: { x: 2, y: 3 },
+      color: '#6a6a50',
+      elevation: 1.05,
+      height: 0.4,
+      solid: false,
+      shown: (s) => s.view === '3d',
+      lines: [LOREM],
+    },
+    // Exists only in top-down.
+    { id: 'flat', at: { x: 5, y: 2 }, color: '#2a4a2a', solid: false, shown: (s) => s.view === 'top', lines: [LOREM] },
     // Gives item 'lorem', which opens the door.
     pickup({
       id: 'sample.key',
@@ -90,8 +116,8 @@ export const sample = defineLevel({
         },
       ],
     },
-    // Drawn from an image; `color` shows until it loads.
-    { id: 'f', at: { x: 12, y: 3 }, color: '#444444', image: '/favicon.svg', lines: [LOREM] },
+    // Drawn from an image: flat from above, an upright camera-facing sprite in 3D.
+    { id: 'f', at: { x: 5, y: 4 }, color: '#444444', image: '/favicon.svg', height: 0.8, lines: [LOREM] },
     // Non-solid floor marker: stand on it and interact to be moved elsewhere.
     {
       id: 'd',
