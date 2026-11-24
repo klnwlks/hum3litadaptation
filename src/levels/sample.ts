@@ -23,6 +23,8 @@ export const sample = defineLevel({
   },
   spawn: { x: 3, y: 3 },
   enter: [LOREM],
+  // Dim room lit by the player; darker still once 'dolor' is set.
+  lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : 0.15, player: { radius: 4 } }),
   things: [
     // Plain: same lines every time, with speakers.
     {
@@ -32,7 +34,14 @@ export const sample = defineLevel({
       lines: [{ speaker: 'Lorem', text: LOREM }, LOREM, { speaker: 'Ipsum', text: LOREM }],
     },
     // Gives item 'lorem', which opens the door.
-    pickup({ id: 'sample.key', item: 'lorem', at: { x: 5, y: 7 }, color: '#c0a040', lines: [LOREM] }),
+    pickup({
+      id: 'sample.key',
+      item: 'lorem',
+      at: { x: 5, y: 7 },
+      color: '#c0a040',
+      light: { color: '#c0a040', radius: 2, intensity: 0.6 },
+      lines: [LOREM],
+    }),
     door({
       id: 'sample.door',
       key: 'lorem',
@@ -50,6 +59,8 @@ export const sample = defineLevel({
       color: '#7a6a1f',
       lines: (s) => (s.flags.readB2 ? [LOREM] : [LOREM, LOREM, LOREM, LOREM]),
       after: ({ set }) => set('readB2', true),
+      // Flickers until read, then goes out.
+      light: (s) => (s.flags.readB2 ? undefined : { color: '#ffd080', radius: 5, flicker: 0.6 }),
     },
     // Only exists once 'b2' has been read; gives item 'ipsum'.
     pickup({ id: 'sample.c', item: 'ipsum', at: { x: 10, y: 5 }, color: '#5a1f7a', shown: flag('readB2'), lines: [LOREM] }),

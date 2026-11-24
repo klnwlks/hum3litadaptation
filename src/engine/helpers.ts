@@ -1,4 +1,4 @@
-import { lines } from './level'
+import { resolve } from './level'
 import type { Cond, Lines, Thing } from './types'
 
 export const has =
@@ -39,7 +39,7 @@ export function door({
   return {
     ...thing,
     shown: (s) => !s.flags[open] && (thing.shown?.(s) ?? true),
-    lines: (s) => (s.items.has(key) ? lines(opened, s) : lines(thing.lines, s)),
+    lines: (s) => (s.items.has(key) ? resolve(opened, s) : resolve(thing.lines, s)),
     after: (ctx) => {
       if (ctx.state.items.has(key)) {
         ctx.set(open, true)

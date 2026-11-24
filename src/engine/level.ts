@@ -1,4 +1,4 @@
-import type { Level, Line, Lines, State, Thing, Vec } from './types'
+import type { Dyn, Level, State, Thing, Vec } from './types'
 
 /** Player hitbox edge, in tiles. */
 export const PLAYER_SIZE = 0.7
@@ -22,7 +22,9 @@ export function defineLevel(level: Level): Level {
 
 export const tileCenter = (v: Vec): Vec => ({ x: v.x + 0.5, y: v.y + 0.5 })
 
-export const lines = (l: Lines, state: State): Line[] => (typeof l === 'function' ? l(state) : l)
+/** Reads a `Dyn` value. `T` must not itself be a function. */
+export const resolve = <T>(value: Dyn<T>, state: State): T =>
+  typeof value === 'function' ? (value as (state: State) => T)(state) : value
 
 export const shownThings = (level: Level, state: State): Thing[] =>
   level.things.filter((t) => t.shown?.(state) ?? true)

@@ -13,6 +13,9 @@ export interface State {
 
 export type Cond = (state: State) => boolean
 
+/** A fixed value, or one derived from story state each time it is read. */
+export type Dyn<T> = T | ((state: State) => T)
+
 /** What an interaction can do once its dialogue has been read through. */
 export interface Ctx {
   /** Reflects `set`/`give`/`take` made earlier in the same callback. */
@@ -38,7 +41,7 @@ export interface Choice {
 
 /** A plain string, or a line attributed to a speaker and/or ending in choices. */
 export type Line = string | { speaker?: string; text: string; choices?: Choice[] }
-export type Lines = Line[] | ((state: State) => Line[])
+export type Lines = Dyn<Line[]>
 
 /**
  * Drawn as `image` (a URL, e.g. a file in public/) stretched over the footprint when given,
@@ -56,6 +59,27 @@ export interface Tile extends Look {
   solid?: boolean
 }
 
+/** A point light. Lights only show against darkness: lower the level's `ambient` below 1. */
+export interface Light {
+  /** Default white. */
+  color?: string
+  /** 1 lights the tile right under it at full color. Default 1. */
+  intensity?: number
+  /** Reach in tiles. Default 4. */
+  radius?: number
+  /** 0 (steady) to 1 (stutters often and deeply). Default 0. */
+  flicker?: number
+}
+
+export interface Lighting {
+  /** Light everywhere, 0 (black) to 1 (unshaded colors). Default 1. */
+  ambient?: number
+  /** Default white. */
+  ambientColor?: string
+  /** Light carried by the player. */
+  player?: Light
+}
+
 export interface Thing extends Look {
   /** Unique within the level; `pickup`/`door` also use it as a flag name, so keep those unique across levels. */
   id: string
@@ -70,6 +94,8 @@ export interface Thing extends Look {
   lines: Lines
   /** Runs after the last line is dismissed. */
   after?: (ctx: Ctx) => void
+  /** Light emitted from the thing's center. */
+  light?: Dyn<Light | undefined>
 }
 
 export interface Level {
@@ -81,4 +107,5 @@ export interface Level {
   things: Thing[]
   /** Dialogue played every time the level loads. */
   enter?: Lines
+  lighting?: Dyn<Lighting>
 }

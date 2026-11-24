@@ -4,7 +4,7 @@ import { choicesOf, fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
 import { CHOICE_KEYS, INTERACT_KEYS } from './input'
 import { Inventory } from './Inventory'
-import { lines, shownThings, thingAhead, tileCenter } from './level'
+import { resolve, shownThings, thingAhead, tileCenter } from './level'
 import type { Ctx, Item, Level, Line, State } from './types'
 import { World, type Player } from './World'
 
@@ -14,7 +14,7 @@ const ZOOM = 48
 const EMPTY: State = { flags: {}, items: new Set() }
 
 function opening(level: Level, state: State): Dialogue | null {
-  const ls = level.enter ? lines(level.enter, state) : []
+  const ls = level.enter ? resolve(level.enter, state) : []
   return ls.length > 0 ? { lines: ls, index: 0, startedAt: performance.now(), after: [], choice: 0 } : null
 }
 
@@ -88,7 +88,7 @@ export function Game({ levels, items, start }: Props) {
         if (!fullyRevealed(dialogue, now)) return setDialogue({ ...dialogue, startedAt: -Infinity })
         const picked = choices[dialogue.choice]
         if (picked)
-          return start(lines(picked.lines ?? [], current), picked.after ? [picked.after, ...dialogue.after] : dialogue.after)
+          return start(resolve(picked.lines ?? [], current), picked.after ? [picked.after, ...dialogue.after] : dialogue.after)
         if (dialogue.index + 1 < dialogue.lines.length)
           return setDialogue({ ...dialogue, index: dialogue.index + 1, startedAt: now, choice: 0 })
         // Close before `after` so a `goto` inside it can open the next level's dialogue.
@@ -96,7 +96,7 @@ export function Game({ levels, items, start }: Props) {
       }
       const p = playerRef.current
       const thing = thingAhead(shownThings(level, current), p.pos, p.facing)
-      if (thing) start(lines(thing.lines, current), thing.after ? [thing.after] : [])
+      if (thing) start(resolve(thing.lines, current), thing.after ? [thing.after] : [])
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -105,7 +105,7 @@ export function Game({ levels, items, start }: Props) {
   return (
     <div className="relative h-screen w-screen bg-black">
       <Canvas orthographic flat gl={{ antialias: false }} camera={{ zoom: ZOOM, position: [0, 0, 10] }}>
-        <World level={level} things={things} playerRef={playerRef} paused={dialogue !== null} />
+        <World level={level} things={things} state={state} playerRef={playerRef} paused={dialogue !== null} />
       </Canvas>
       <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}
