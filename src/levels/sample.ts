@@ -21,7 +21,7 @@ export const sample = defineLevel({
     '#': { color: '#3a3a3a', solid: true },
     '.': { color: '#141414' },
     X: { color: '#3a3a3a', solid: true, faces: { s: { color: '#5a0f0f', image: '/favicon.svg' } } },
-    r: { color: '#141414', ceiling: { color: '#4a0a0a' } },
+    r: { color: '#141414', ceiling: { color: '#4a0a0a', image: '/favicon.svg' } },
   },
   ceiling: { color: '#0d0d10', height: 1.5 },
   // Sound files aren't shipped; missing ones stay silent.

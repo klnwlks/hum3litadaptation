@@ -43,8 +43,8 @@ void main() {
   vec4 base = vec4(uColor, 1.0);
 #ifdef USE_IMAGE
 #ifdef GRID_UV
-  // Floors: u east, v north. Walls: u to the viewer's right, v up.
-  vec2 uv = abs(n.y) > 0.5 ? vec2(vWorld.x, -vWorld.z) : vec2(dot(vWorld.xz, vec2(n.z, -n.x)), vWorld.y);
+  // Floors: u east, v north; ceilings flip v to read upright from below. Walls: u to the viewer's right, v up.
+  vec2 uv = abs(n.y) > 0.5 ? vec2(vWorld.x, -vWorld.z * n.y) : vec2(dot(vWorld.xz, vec2(n.z, -n.x)), vWorld.y);
 #else
   vec2 uv = vUv;
 #endif
