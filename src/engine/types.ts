@@ -25,7 +25,9 @@ export interface Ctx {
   goto(level: string, at?: Vec): void
 }
 
-export type Lines = string[] | ((state: State) => string[])
+/** A plain string, or a line attributed to a speaker. */
+export type Line = string | { speaker?: string; text: string }
+export type Lines = Line[] | ((state: State) => Line[])
 
 /** How a held item looks in the inventory strip. */
 export interface Item {

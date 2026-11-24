@@ -1,10 +1,11 @@
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
+import { fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
 import { INTERACT_KEYS } from './input'
 import { Inventory } from './Inventory'
 import { lines, shownThings, thingAhead, tileCenter } from './level'
-import type { Ctx, Item, Level, State, Thing } from './types'
+import type { Ctx, Item, Level, Line, State } from './types'
 import { World, type Player } from './World'
 
 /** Screen pixels per tile. */
@@ -12,11 +13,9 @@ const ZOOM = 48
 
 const EMPTY: State = { flags: {}, items: new Set() }
 
-type Dialogue = { lines: string[]; index: number; after?: Thing['after'] }
-
 function opening(level: Level, state: State): Dialogue | null {
   const ls = level.enter ? lines(level.enter, state) : []
-  return ls.length > 0 ? { lines: ls, index: 0 } : null
+  return ls.length > 0 ? { lines: ls, index: 0, startedAt: performance.now(), after: [] } : null
 }
 
 function levelById(levels: Record<string, Level>, id: string): Level {
@@ -68,21 +67,27 @@ export function Game({ levels, items, start }: Props) {
       },
     }
 
+    /** Opens `ls`, or runs `after` straight away when there is nothing to read. */
+    const start = (ls: Line[], after: Dialogue['after']) => {
+      if (ls.length > 0) return setDialogue({ lines: ls, index: 0, startedAt: performance.now(), after })
+      setDialogue(null)
+      for (const fn of after) fn(ctx)
+    }
+
     const onKey = (e: KeyboardEvent) => {
       if (!INTERACT_KEYS[e.code] || e.repeat) return
       e.preventDefault()
+      const now = performance.now()
       if (dialogue) {
-        if (dialogue.index + 1 < dialogue.lines.length) return setDialogue({ ...dialogue, index: dialogue.index + 1 })
-        // Close first so a `goto` inside `after` can open the next level's dialogue.
-        setDialogue(null)
-        return dialogue.after?.(ctx)
+        if (!fullyRevealed(dialogue, now)) return setDialogue({ ...dialogue, startedAt: -Infinity })
+        if (dialogue.index + 1 < dialogue.lines.length)
+          return setDialogue({ ...dialogue, index: dialogue.index + 1, startedAt: now })
+        // Close before `after` so a `goto` inside it can open the next level's dialogue.
+        return start([], dialogue.after)
       }
       const p = playerRef.current
       const thing = thingAhead(shownThings(level, current), p.pos, p.facing)
-      if (!thing) return
-      const ls = lines(thing.lines, current)
-      if (ls.length > 0) setDialogue({ lines: ls, index: 0, after: thing.after })
-      else thing.after?.(ctx)
+      if (thing) start(lines(thing.lines, current), thing.after ? [thing.after] : [])
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -94,7 +99,7 @@ export function Game({ levels, items, start }: Props) {
         <World level={level} things={things} playerRef={playerRef} paused={dialogue !== null} />
       </Canvas>
       <Inventory held={state.items} items={items} />
-      {dialogue && <DialogueBox text={dialogue.lines[dialogue.index]} />}
+      {dialogue && <DialogueBox dialogue={dialogue} />}
     </div>
   )
 }

@@ -24,8 +24,13 @@ export const sample = defineLevel({
   spawn: { x: 3, y: 3 },
   enter: [LOREM],
   things: [
-    // Plain: same lines every time.
-    { id: 'a', at: { x: 1, y: 1 }, color: '#7a1f1f', lines: [LOREM, LOREM, LOREM] },
+    // Plain: same lines every time, with speakers.
+    {
+      id: 'a',
+      at: { x: 1, y: 1 },
+      color: '#7a1f1f',
+      lines: [{ speaker: 'Lorem', text: LOREM }, LOREM, { speaker: 'Ipsum', text: LOREM }],
+    },
     // Gives item 'lorem', which opens the door.
     pickup({ id: 'sample.key', item: 'lorem', at: { x: 5, y: 7 }, color: '#c0a040', lines: [LOREM] }),
     door({
