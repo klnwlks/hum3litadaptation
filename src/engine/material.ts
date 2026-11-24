@@ -15,11 +15,11 @@ import type { Look } from './types'
 
 /** How a look's image maps onto a surface. */
 export type Mapping =
-  /** Stretched over the mesh once (things). */
+  /** Stretched over the mesh once, drawn over the color (thing boxes). */
   | 'stretch'
-  /** Repeated once per world unit, aligned to the grid (tiles: floors, walls, ceilings). */
+  /** Repeated once per world unit, aligned to the grid, drawn over the color (floors, walls, ceilings). */
   | 'grid'
-  /** Upright camera-facing sprite: stretched, lit as if flat on the floor. */
+  /** Stretched once; transparent where the image is, lit as if flat on the floor (sprites, decals). */
   | 'sprite'
 
 const vertexShader = /* glsl */ `
@@ -53,8 +53,13 @@ void main() {
 #else
   vec2 uv = vUv;
 #endif
-  base = texture2D(uImage, uv);
-  if (base.a < 0.5) discard;
+  vec4 image = texture2D(uImage, uv);
+#ifdef SPRITE
+  if (image.a < 0.5) discard;
+  base = image;
+#else
+  base.rgb = mix(uColor, image.rgb, image.a);
+#endif
 #endif
 #ifdef SPRITE
   n = vec3(0.0, 1.0, 0.0);

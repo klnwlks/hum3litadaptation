@@ -47,14 +47,15 @@ export interface Choice {
   after?: (ctx: Ctx) => void
 }
 
-/** A plain string, or a line attributed to a speaker and/or ending in choices. */
-export type Line = string | { speaker?: string; text: string; choices?: Choice[] }
+/** A plain string, or a line with a speaker, a portrait image (URL), and/or closing choices. */
+export type Line = string | { speaker?: string; portrait?: string; text: string; choices?: Choice[] }
 export type Lines = Dyn<Line[]>
 
 /**
  * Drawn as `image` (a URL, e.g. a file in public/) when given, else as a flat `color`. `color` also
- * shows while the image loads. Things stretch the image over their footprint; tiles repeat it once
- * per tile on every side, so tall walls tile it vertically.
+ * shows while the image loads or if it fails. Tiles repeat the image once per tile on every side
+ * (tall walls tile it vertically) and draw it over `color`. Image things, image players, and items
+ * are cut out where the image is transparent.
  */
 export interface Look {
   color: string

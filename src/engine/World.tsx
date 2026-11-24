@@ -102,7 +102,7 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
             position-y={PLAYER_HEIGHT}
             rotation-x={-Math.PI / 2}
             geometry={plane(PLAYER_SIZE, PLAYER_SIZE)}
-            material={litMaterial(playerLook, 'stretch')}
+            material={litMaterial(playerLook, 'sprite')}
           />
         ) : (
           <mesh position-y={PLAYER_HEIGHT / 2} geometry={box(PLAYER_SIZE, PLAYER_HEIGHT, PLAYER_SIZE)} material={litMaterial(playerLook, 'stretch')} />
@@ -151,7 +151,7 @@ function ThingMesh({ thing, view }: { thing: Thing; view: View }) {
     return <mesh position={[x, bottom + height / 2, z]} geometry={box(size.x, height, size.y)} material={litMaterial(thing, 'stretch')} />
   if (view === 'top')
     return (
-      <mesh position={[x, bottom + height, z]} rotation-x={-Math.PI / 2} geometry={plane(size.x, size.y)} material={litMaterial(thing, 'stretch')} />
+      <mesh position={[x, bottom + height, z]} rotation-x={-Math.PI / 2} geometry={plane(size.x, size.y)} material={litMaterial(thing, 'sprite')} />
     )
   return <Sprite x={x} z={z} bottom={bottom} width={size.x} height={height} look={thing} />
 }

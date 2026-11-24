@@ -7,20 +7,24 @@ export function DialogueBox({ dialogue, choices }: { dialogue: Dialogue; choices
   const now = useTypewriterClock(dialogue)
   const line = dialogue.lines[dialogue.index]
   const speaker = typeof line === 'string' ? undefined : line.speaker
+  const portrait = typeof line === 'string' ? undefined : line.portrait
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">
-      <div className="w-full max-w-3xl border-4 border-white bg-black p-4 font-mono text-lg leading-relaxed text-white">
-        {speaker && <h2 className="mb-1 font-bold">{speaker}</h2>}
-        <p>{lineText(line).slice(0, revealed(dialogue, now))}</p>
-        {fullyRevealed(dialogue, now) && choices.length > 0 && (
-          <ul className="mt-3">
-            {choices.map((c, i) => (
-              <li key={c.text} className={i === dialogue.choice ? 'bg-white px-2 text-black' : 'px-2'}>
-                {c.text}
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="flex w-full max-w-3xl gap-4 border-4 border-white bg-black p-4 font-mono text-lg leading-relaxed text-white">
+        {portrait && <img src={portrait} alt="" className="size-24 shrink-0 object-contain [image-rendering:pixelated]" />}
+        <div className="min-w-0 flex-1">
+          {speaker && <h2 className="mb-1 font-bold">{speaker}</h2>}
+          <p>{lineText(line).slice(0, revealed(dialogue, now))}</p>
+          {fullyRevealed(dialogue, now) && choices.length > 0 && (
+            <ul className="mt-3">
+              {choices.map((c, i) => (
+                <li key={c.text} className={i === dialogue.choice ? 'bg-white px-2 text-black' : 'px-2'}>
+                  {c.text}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   )
