@@ -35,7 +35,7 @@ export const sample = defineLevel({
   spawn: { x: 3, y: 3 },
   enter: [LOREM],
   lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : s.view === '3d' ? 0.08 : 0.15, player: { radius: 4 } }),
-  fog: (s) => ({ distance: s.view === '3d' ? 5 : 9 }),
+  fog: (s) => ({ distance: s.view === '3d' ? 6.5 : 11 }),
   effects: (s) => ({
     vignette: 0.7,
     grain: 0.25,
