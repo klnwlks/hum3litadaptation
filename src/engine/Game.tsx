@@ -1,8 +1,8 @@
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
-import { fullyRevealed, type Dialogue } from './dialogue'
+import { choicesOf, fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
-import { INTERACT_KEYS } from './input'
+import { CHOICE_KEYS, INTERACT_KEYS } from './input'
 import { Inventory } from './Inventory'
 import { lines, shownThings, thingAhead, tileCenter } from './level'
 import type { Ctx, Item, Level, Line, State } from './types'
@@ -15,7 +15,7 @@ const EMPTY: State = { flags: {}, items: new Set() }
 
 function opening(level: Level, state: State): Dialogue | null {
   const ls = level.enter ? lines(level.enter, state) : []
-  return ls.length > 0 ? { lines: ls, index: 0, startedAt: performance.now(), after: [] } : null
+  return ls.length > 0 ? { lines: ls, index: 0, startedAt: performance.now(), after: [], choice: 0 } : null
 }
 
 function levelById(levels: Record<string, Level>, id: string): Level {
@@ -69,19 +69,28 @@ export function Game({ levels, items, start }: Props) {
 
     /** Opens `ls`, or runs `after` straight away when there is nothing to read. */
     const start = (ls: Line[], after: Dialogue['after']) => {
-      if (ls.length > 0) return setDialogue({ lines: ls, index: 0, startedAt: performance.now(), after })
+      if (ls.length > 0) return setDialogue({ lines: ls, index: 0, startedAt: performance.now(), after, choice: 0 })
       setDialogue(null)
       for (const fn of after) fn(ctx)
     }
 
     const onKey = (e: KeyboardEvent) => {
+      const now = performance.now()
+      const choices = dialogue ? choicesOf(dialogue.lines[dialogue.index], current) : []
+      const step = CHOICE_KEYS[e.code]
+      if (dialogue && step && choices.length > 0 && fullyRevealed(dialogue, now)) {
+        e.preventDefault()
+        return setDialogue({ ...dialogue, choice: (dialogue.choice + step + choices.length) % choices.length })
+      }
       if (!INTERACT_KEYS[e.code] || e.repeat) return
       e.preventDefault()
-      const now = performance.now()
       if (dialogue) {
         if (!fullyRevealed(dialogue, now)) return setDialogue({ ...dialogue, startedAt: -Infinity })
+        const picked = choices[dialogue.choice]
+        if (picked)
+          return start(lines(picked.lines ?? [], current), picked.after ? [picked.after, ...dialogue.after] : dialogue.after)
         if (dialogue.index + 1 < dialogue.lines.length)
-          return setDialogue({ ...dialogue, index: dialogue.index + 1, startedAt: now })
+          return setDialogue({ ...dialogue, index: dialogue.index + 1, startedAt: now, choice: 0 })
         // Close before `after` so a `goto` inside it can open the next level's dialogue.
         return start([], dialogue.after)
       }
@@ -99,7 +108,7 @@ export function Game({ levels, items, start }: Props) {
         <World level={level} things={things} playerRef={playerRef} paused={dialogue !== null} />
       </Canvas>
       <Inventory held={state.items} items={items} />
-      {dialogue && <DialogueBox dialogue={dialogue} />}
+      {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}
     </div>
   )
 }

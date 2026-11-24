@@ -1,4 +1,4 @@
-import type { Ctx, Line } from './types'
+import type { Choice, Ctx, Line, State } from './types'
 
 /** Typewriter speed: milliseconds per revealed character. */
 export const CHAR_MS = 30
@@ -10,7 +10,13 @@ export type Dialogue = {
   startedAt: number
   /** Callbacks run in order when the conversation ends. */
   after: ((ctx: Ctx) => void)[]
+  /** Highlighted choice, an index into `choicesOf(current line)`. */
+  choice: number
 }
+
+/** Choices on `line` whose `requires` holds. */
+export const choicesOf = (line: Line, state: State): Choice[] =>
+  typeof line === 'string' ? [] : (line.choices?.filter((c) => c.requires?.(state) ?? true) ?? [])
 
 export const lineText = (line: Line): string => (typeof line === 'string' ? line : line.text)
 

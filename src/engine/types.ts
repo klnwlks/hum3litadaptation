@@ -25,8 +25,19 @@ export interface Ctx {
   goto(level: string, at?: Vec): void
 }
 
-/** A plain string, or a line attributed to a speaker. */
-export type Line = string | { speaker?: string; text: string }
+/**
+ * An option offered after a line. Unmet `requires` hides it. Picking it replaces the rest of the
+ * conversation with its `lines`; its `after` runs before the interaction's own `after`.
+ */
+export interface Choice {
+  text: string
+  requires?: Cond
+  lines?: Lines
+  after?: (ctx: Ctx) => void
+}
+
+/** A plain string, or a line attributed to a speaker and/or ending in choices. */
+export type Line = string | { speaker?: string; text: string; choices?: Choice[] }
 export type Lines = Line[] | ((state: State) => Line[])
 
 /** How a held item looks in the inventory strip. */

@@ -1,4 +1,4 @@
-import { door, flag, pickup } from '../engine/helpers'
+import { door, flag, has, pickup } from '../engine/helpers'
 import { defineLevel } from '../engine/level'
 
 const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.'
@@ -53,6 +53,24 @@ export const sample = defineLevel({
     },
     // Only exists once 'b2' has been read; gives item 'ipsum'.
     pickup({ id: 'sample.c', item: 'ipsum', at: { x: 10, y: 5 }, color: '#5a1f7a', shown: flag('readB2'), lines: [LOREM] }),
+    // Choices; the last one needs item 'ipsum' and sets 'dolor'.
+    {
+      id: 'e',
+      at: { x: 9, y: 7 },
+      color: '#7a1f5a',
+      lines: [
+        LOREM,
+        {
+          speaker: 'Lorem',
+          text: LOREM,
+          choices: [
+            { text: 'Lorem ipsum', lines: [LOREM] },
+            { text: 'Dolor sit', lines: [{ speaker: 'Ipsum', text: LOREM }, LOREM] },
+            { text: 'Amet consectetur', requires: has('ipsum'), lines: [LOREM], after: ({ set }) => set('dolor', true) },
+          ],
+        },
+      ],
+    },
     // Non-solid floor marker: stand on it and interact to be moved elsewhere.
     {
       id: 'd',

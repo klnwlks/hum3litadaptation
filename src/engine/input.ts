@@ -14,6 +14,9 @@ const DIRS: Record<string, Vec> = {
 
 export const INTERACT_KEYS: Record<string, true> = { KeyE: true, Space: true, Enter: true }
 
+/** Moves the highlighted dialogue choice. */
+export const CHOICE_KEYS: Record<string, -1 | 1> = { ArrowUp: -1, KeyW: -1, ArrowDown: 1, KeyS: 1 }
+
 /** Held movement keys, read every frame without re-rendering. */
 export function useHeldKeys() {
   const held = useRef(new Set<string>())
