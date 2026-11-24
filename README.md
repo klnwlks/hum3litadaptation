@@ -57,7 +57,7 @@ Helpers in `src/engine/helpers.ts`:
 
 `defineLevel` throws on ragged rows, unknown tile characters, and duplicate thing ids. `give` throws on items missing from the registry.
 
-Lights have no shadows: they shine through walls.
+Solid tiles and solid things cast hard, tile-exact shadows. Things that emit a light don't cast shadows, so a lamp never darkens its own glow. Up to 16 lights per level (player light first); `radius` at most 30.
 
 ## Layout
 
@@ -65,7 +65,8 @@ Lights have no shadows: they shine through walls.
 - `src/engine/level.ts`: validation, collision, interaction lookup, `resolve`.
 - `src/engine/helpers.ts`: `pickup`, `door`, `has`, `flag`.
 - `src/engine/dialogue.ts`: dialogue model, typewriter timing, choice filtering.
-- `src/engine/World.tsx`: tiles, things, images, lights, movement.
-- `src/engine/PostFX.tsx`: full-screen shader pass.
+- `src/engine/World.tsx`: unlit tiles, things, images, movement.
+- `src/engine/lighting.ts`: occupancy grid, light collection, shadow-casting GLSL.
+- `src/engine/PostFX.tsx`: full-screen pass applying lighting, then effects.
 - `src/engine/Game.tsx`: level, state, and dialogue flow.
 - `src/engine/DialogueBox.tsx`, `src/engine/Inventory.tsx`: DOM overlays.

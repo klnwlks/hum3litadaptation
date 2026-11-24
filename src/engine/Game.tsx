@@ -106,8 +106,8 @@ export function Game({ levels, items, start }: Props) {
   return (
     <div className="relative h-screen w-screen bg-black">
       <Canvas orthographic flat gl={{ antialias: false }} camera={{ zoom: ZOOM, position: [0, 0, 10] }}>
-        <World level={level} things={things} state={state} playerRef={playerRef} paused={dialogue !== null} />
-        <PostFX effects={level.effects ? resolve(level.effects, state) : {}} />
+        <World level={level} things={things} playerRef={playerRef} paused={dialogue !== null} />
+        <PostFX level={level} things={things} state={state} playerRef={playerRef} />
       </Canvas>
       <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}

@@ -59,13 +59,16 @@ export interface Tile extends Look {
   solid?: boolean
 }
 
-/** A point light. Lights only show against darkness: lower the level's `ambient` below 1. */
+/**
+ * A point light. Lights only show against darkness: lower the level's `ambient` below 1.
+ * Solid tiles and solid things cast shadows, except things that emit a light themselves.
+ */
 export interface Light {
   /** Default white. */
   color?: string
-  /** 1 lights the tile right under it at full color. Default 1. */
+  /** Brightness at the center, fading to 0 at `radius`; 1 shows full color. Default 1. */
   intensity?: number
-  /** Reach in tiles. Default 4. */
+  /** Reach in tiles, at most 30 (shadow rays stop after 64 cells). Default 4. */
   radius?: number
   /** 0 (steady) to 1 (stutters often and deeply). Default 0. */
   flicker?: number
