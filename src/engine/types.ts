@@ -34,6 +34,8 @@ export interface Ctx {
   take(item: string): void
   /** Load `level` and place the player at `at` (defaults to the level's spawn). */
   goto(level: string, at?: Vec): void
+  /** Plays an audio file (URL) once at `volume`, 0 to 1 (default 1). */
+  play(src: string, volume?: number): void
 }
 
 /**
@@ -47,9 +49,23 @@ export interface Choice {
   after?: (ctx: Ctx) => void
 }
 
-/** A plain string, or a line with a speaker, a portrait image (URL), and/or closing choices. */
-export type Line = string | { speaker?: string; portrait?: string; text: string; choices?: Choice[] }
+/**
+ * A plain string, or a line with a speaker, a portrait image (URL), a sound (URL, played once when
+ * the line appears), and/or closing choices.
+ */
+export type Line = string | { speaker?: string; portrait?: string; sound?: string; text: string; choices?: Choice[] }
 export type Lines = Dyn<Line[]>
+
+/** A looping audio file (URL, e.g. in public/) at `volume`, 0 to 1 (default 1). Missing files stay silent. */
+export interface Sound {
+  src: string
+  volume?: number
+}
+
+/** A looping sound from a thing: fades to silence at `radius` tiles (default 6) and pans by direction. */
+export interface Emitter extends Sound {
+  radius?: number
+}
 
 /**
  * Drawn as `image` (a URL, e.g. a file in public/) when given, else as a flat `color`. `color` also
@@ -137,6 +153,8 @@ export interface Thing extends Look {
   after?: (ctx: Ctx) => void
   /** Light emitted from the thing's center. */
   light?: Dyn<Light | undefined>
+  /** Looping sound emitted from the thing's center. */
+  sound?: Dyn<Emitter | undefined>
 }
 
 export interface Level {
@@ -152,4 +170,6 @@ export interface Level {
   effects?: Dyn<Effects>
   /** Seen only in 3D; `height` is the wall and ceiling height in tiles. Defaults to near-black, 1.5. */
   ceiling?: Look & { height?: number }
+  /** Looping background sound for the level. */
+  ambience?: Dyn<Sound | undefined>
 }

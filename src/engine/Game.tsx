@@ -1,5 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
+import { playOnce, unlockAudio } from './audio'
 import { choicesOf, fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
 import { CHOICE_KEYS, INTERACT_KEYS, VIEW_KEYS } from './input'
@@ -55,6 +56,15 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const dpr = useLowResDpr()
   const things = shownThings(level, state)
 
+  // A line's sound plays once when the line appears (not again when its typing is skipped).
+  const lines = dialogue?.lines
+  const index = dialogue?.index
+  const line = lines?.[index ?? 0]
+  const lineSound = typeof line === 'object' ? line.sound : undefined
+  useEffect(() => {
+    if (lineSound) playOnce(lineSound)
+  }, [lines, index, lineSound])
+
   useEffect(() => {
     // Local copy so an `after` callback sees its own changes immediately (e.g. set then goto).
     let current = state
@@ -82,6 +92,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         setLevel(next)
         setDialogue(opening(next, current))
       },
+      play: playOnce,
     }
 
     /** Opens `ls`, or runs `after` straight away when there is nothing to read. */
@@ -93,6 +104,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
 
     const onKey = (e: KeyboardEvent) => {
       const now = performance.now()
+      unlockAudio()
       if (VIEW_KEYS[e.code] && !dialogue && !e.repeat) {
         e.preventDefault()
         return setViewTarget((v) => (v === '3d' ? 'top' : '3d'))

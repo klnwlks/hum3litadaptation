@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef, type RefObject } from 'react'
 import type { Group, Mesh, PerspectiveCamera } from 'three'
+import { useSoundscape } from './audio'
 import { axes, useHeldKeys } from './input'
 import { facingOf, move, PLAYER_SIZE, type Player } from './level'
 import { useLighting } from './lighting'
@@ -49,6 +50,7 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
   const tilt = useRef(state.view === '3d' ? 1 : 0)
   const ceilingHeight = level.ceiling?.height ?? DEFAULT_CEILING_HEIGHT
   useLighting(level, things, state, playerRef)
+  useSoundscape(level, things, state, playerRef)
 
   useFrame((three, dt) => {
     // Clamp so a stalled frame (tab switch) cannot tunnel through walls.
