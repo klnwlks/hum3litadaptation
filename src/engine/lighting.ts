@@ -4,15 +4,11 @@ import { Color, DataTexture, NearestFilter, RGBAFormat, Vector2, Vector3 } from 
 import { resolve, type Player } from './level'
 import type { Level, Light, State, Thing, Vec } from './types'
 
-/** Lights past this many (player light first, then things in level order) are ignored. */
 export const MAX_LIGHTS = 16
 
 type PlacedLight = { at: Vec; light: Light }
 
-/**
- * One texel per tile, red = 255 where light is blocked: solid tiles, and solid things that do not
- * emit light themselves (so a lamp never shadows its own glow).
- */
+// One texel per tile, red where light is blocked. Emitters are left out so lamps don't shadow themselves.
 function occupancy(level: Level, things: Thing[], state: State): DataTexture {
   const width = level.map[0].length
   const height = level.map.length
@@ -36,7 +32,6 @@ function occupancy(level: Level, things: Thing[], state: State): DataTexture {
   return texture
 }
 
-/** Lights emitted by shown things, placed at each thing's center. */
 function thingLights(things: Thing[], state: State): PlacedLight[] {
   const placed: PlacedLight[] = []
   for (const t of things) {
@@ -48,11 +43,10 @@ function thingLights(things: Thing[], state: State): PlacedLight[] {
   return placed
 }
 
-/** Random dips in brightness; 1 when steady. Called once per light per frame. */
 const flickerScale = (flicker: number): number =>
   flicker > 0 && Math.random() < flicker * 0.2 ? 1 - flicker * Math.random() : 1
 
-/** Uniform objects shared by reference with every lit material; `useLighting` updates them each frame. */
+// Shared by reference with every lit material.
 export const lightingUniforms = {
   tMap: { value: null as DataTexture | null },
   uMapSize: { value: new Vector2() },
@@ -64,7 +58,6 @@ export const lightingUniforms = {
 
 const scratchColor = new Color()
 
-/** Feeds the level's occupancy grid, ambient, and lights into `lightingUniforms`. */
 export function useLighting(level: Level, things: Thing[], state: State, playerRef: RefObject<Player>) {
   const lighting = level.lighting ? resolve(level.lighting, state) : {}
   const placed = thingLights(things, state)
@@ -88,13 +81,8 @@ export function useLighting(level: Level, things: Thing[], state: State, playerR
   })
 }
 
-/**
- * GLSL for `vec3 lightAt(vec2 tile, vec3 normal)`: ambient plus every light with a clear line to
- * `tile` (map coordinates, y down; world xz). Lighting is flat like Doom's: height is ignored.
- * Rays walk the occupancy grid cell by cell (DDA) and skip their starting cell. A blocked cell is
- * tested from its point nearest the light, so wall faces light evenly; upright faces also dim by
- * how directly they face the light.
- */
+// Flat lighting (height ignored). Rays walk the grid (DDA), skipping their start cell; a blocked cell
+// is tested from its point nearest the light so wall faces light evenly.
 export const lightingGlsl = /* glsl */ `
 #define MAX_LIGHTS ${MAX_LIGHTS}
 uniform sampler2D tMap;

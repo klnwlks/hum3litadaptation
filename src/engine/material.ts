@@ -13,14 +13,9 @@ import {
 import { lightingGlsl, lightingUniforms } from './lighting'
 import type { Look } from './types'
 
-/** How a look's image maps onto a surface. */
-export type Mapping =
-  /** Stretched over the mesh once, drawn over the color (thing boxes). */
-  | 'stretch'
-  /** Repeated once per world unit, aligned to the grid, drawn over the color (floors, walls, ceilings). */
-  | 'grid'
-  /** Stretched once; transparent where the image is, lit as if flat on the floor (sprites, decals). */
-  | 'sprite'
+// stretch: once over the mesh, over the color. grid: once per tile, over the color.
+// sprite: once, cut out on alpha, lit as if flat.
+export type Mapping = 'stretch' | 'grid' | 'sprite'
 
 const vertexShader = /* glsl */ `
 varying vec3 vWorld;
@@ -48,7 +43,7 @@ void main() {
   vec4 base = vec4(uColor, 1.0);
 #ifdef USE_IMAGE
 #ifdef GRID_UV
-  // Floors and ceilings: u east, v north. Upright faces: u to the viewer's right, v up.
+  // Floors: u east, v north. Walls: u to the viewer's right, v up.
   vec2 uv = abs(n.y) > 0.5 ? vec2(vWorld.x, -vWorld.z) : vec2(dot(vWorld.xz, vec2(n.z, -n.x)), vWorld.y);
 #else
   vec2 uv = vUv;
@@ -64,7 +59,7 @@ void main() {
 #ifdef SPRITE
   n = vec3(0.0, 1.0, 0.0);
 #endif
-  // Nudge into the surface so wall faces sample their own (blocked) cell.
+  // Nudge inward so wall faces sample their own (blocked) cell.
   vec2 tile = vWorld.xz - n.xz * 0.01;
   gl_FragColor = vec4(base.rgb * lightAt(tile, n), 1.0);
 }`
@@ -72,10 +67,7 @@ void main() {
 const loader = new TextureLoader()
 const materials = new Map<string, ShaderMaterial>()
 
-/**
- * Shared, lit material for a look. Cached forever by look and mapping (looks are few); the color
- * shows until the image loads, and stays if it fails.
- */
+// Cached forever: looks are few.
 export function litMaterial(look: Look, mapping: Mapping): ShaderMaterial {
   const key = `${look.color}|${look.image ?? ''}|${mapping}`
   const cached = materials.get(key)
@@ -110,7 +102,6 @@ export function litMaterial(look: Look, mapping: Mapping): ShaderMaterial {
 const boxes = new Map<string, BoxGeometry>()
 const planes = new Map<string, PlaneGeometry>()
 
-/** Shared box geometry, cached by size. */
 export function box(x: number, y: number, z: number): BoxGeometry {
   const key = `${x},${y},${z}`
   let geometry = boxes.get(key)
@@ -118,7 +109,6 @@ export function box(x: number, y: number, z: number): BoxGeometry {
   return geometry
 }
 
-/** Shared plane geometry in its default XY orientation, cached by size. */
 export function plane(x: number, y: number): PlaneGeometry {
   const key = `${x},${y}`
   let geometry = planes.get(key)

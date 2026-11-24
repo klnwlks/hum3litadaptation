@@ -8,15 +8,12 @@ import { useLighting } from './lighting'
 import { box, litMaterial, plane } from './material'
 import type { Level, Look, Side, State, Thing, View } from './types'
 
-/** Tiles per second. */
-const SPEED = 4
-/** Radians per second, 3D only. */
-const TURN_SPEED = 2.6
+const SPEED = 4 // tiles/s
+const TURN_SPEED = 2.6 // rad/s
 const TILT_SECONDS = 0.9
-/** A narrow field of view from far above reads as a flat top-down map. */
+// Narrow FOV from far above reads as a flat map.
 const TOP_FOV = 10
-/** Shows about 16 tiles vertically at TOP_FOV. */
-const TOP_HEIGHT = 8 / Math.tan(((TOP_FOV / 2) * Math.PI) / 180)
+const TOP_HEIGHT = 8 / Math.tan(((TOP_FOV / 2) * Math.PI) / 180) // ~16 tiles tall
 const EYE_FOV = 70
 const EYE_HEIGHT = 0.5
 const PLAYER_HEIGHT = 0.6
@@ -27,23 +24,15 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
 type Props = {
   level: Level
-  /** Things currently shown; hidden ones are already filtered out. */
   things: Thing[]
   state: State
   playerRef: RefObject<Player>
-  /** Seen in top-down only; an image lies flat on top of the player. */
   playerLook: Look
   paused: boolean
-  /** The view being tilted toward. */
   viewTarget: View
-  /** Called when the tilt crosses its midpoint. */
   onView: (view: View) => void
 }
 
-/**
- * Renders the level in 3D (the top-down view is the same scene from high above), drives the camera
- * tilt between views, and moves the player: 8-way in top-down, turn-and-walk in 3D.
- */
 export function World({ level, things, state, playerRef, playerLook, paused, viewTarget, onView }: Props) {
   const held = useHeldKeys()
   const body = useRef<Group>(null)
@@ -53,7 +42,7 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
   useSoundscape(level, things, state, playerRef)
 
   useFrame((three, dt) => {
-    // Clamp so a stalled frame (tab switch) cannot tunnel through walls.
+    // Clamp so a stalled frame can't tunnel through walls.
     const step = Math.min(dt, 0.1)
     const before = tilt.current
     const t = viewTarget === '3d' ? Math.min(1, before + step / TILT_SECONDS) : Math.max(0, before - step / TILT_SECONDS)
@@ -83,7 +72,7 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
     camera.fov = lerp(TOP_FOV, EYE_FOV, eased)
     camera.updateProjectionMatrix()
     camera.position.set(pos.x, Math.exp(lerp(Math.log(TOP_HEIGHT), Math.log(EYE_HEIGHT), eased)), pos.y)
-    // Top-down keeps north up; 3D looks along the player's yaw (wrapped so the tilt turns the short way).
+    // Wrapped yaw so the tilt turns the short way.
     camera.rotation.set(lerp(-Math.PI / 2, 0, eased), -Math.atan2(Math.sin(yaw), Math.cos(yaw)) * eased, 0, 'YXZ')
   })
 
@@ -114,12 +103,11 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
   )
 }
 
-/** Solid tiles are wall blocks up to the ceiling; others are a floor plus a downward-facing ceiling. */
 function TileMesh({ x, y, tile, ceiling, height }: { x: number; y: number; tile: Level['tiles'][string]; ceiling: Look; height: number }) {
   if (tile.solid) {
     const side = (s: Side) => litMaterial(tile.faces?.[s] ?? tile, 'grid')
     const top = litMaterial(tile, 'grid')
-    // BoxGeometry face order: +x, -x, +y, -y, +z, -z = east, west, top, bottom, south, north.
+    // BoxGeometry face order: east, west, top, bottom, south, north.
     return (
       <mesh
         position={[x + 0.5, height / 2, y + 0.5]}
@@ -131,7 +119,7 @@ function TileMesh({ x, y, tile, ceiling, height }: { x: number; y: number; tile:
   return (
     <>
       <mesh position={[x + 0.5, 0, y + 0.5]} rotation-x={-Math.PI / 2} geometry={plane(1, 1)} material={litMaterial(tile, 'grid')} />
-      {/* Faces down, so back-face culling hides it from the top-down camera. */}
+      {/* Faces down: back-face culling hides it from above. */}
       <mesh
         position={[x + 0.5, height, y + 0.5]}
         rotation-x={Math.PI / 2}
@@ -142,7 +130,6 @@ function TileMesh({ x, y, tile, ceiling, height }: { x: number; y: number; tile:
   )
 }
 
-/** Plain things are boxes. Image things lie flat on their top in top-down and stand as sprites in 3D. */
 function ThingMesh({ thing, view }: { thing: Thing; view: View }) {
   const size = thing.size ?? { x: 1, y: 1 }
   const height = thing.height ?? 1
@@ -158,7 +145,6 @@ function ThingMesh({ thing, view }: { thing: Thing; view: View }) {
   return <Sprite x={x} z={z} bottom={bottom} width={size.x} height={height} look={thing} />
 }
 
-/** Upright plane that turns to face the camera around the vertical axis, like Doom's sprites. */
 function Sprite({ x, z, bottom, width, height, look }: { x: number; z: number; bottom: number; width: number; height: number; look: Look }) {
   const ref = useRef<Mesh>(null)
   useFrame(({ camera }) => {

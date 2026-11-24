@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { fullyRevealed, lineText, revealed, type Dialogue } from './dialogue'
 import type { Choice } from './types'
 
-/** `choices` are the current line's visible choices; shown once the line finishes typing. */
 export function DialogueBox({ dialogue, choices }: { dialogue: Dialogue; choices: Choice[] }) {
   const now = useTypewriterClock(dialogue)
   const line = dialogue.lines[dialogue.index]
@@ -30,7 +29,6 @@ export function DialogueBox({ dialogue, choices }: { dialogue: Dialogue; choices
   )
 }
 
-/** Re-renders every animation frame until the current line is fully revealed. */
 function useTypewriterClock(dialogue: Dialogue): number {
   const [now, setNow] = useState(() => performance.now())
   const running = !fullyRevealed(dialogue, now)

@@ -11,7 +11,6 @@ export const flag =
   (s) =>
     s.flags[name] !== undefined && s.flags[name] !== false
 
-/** A thing that gives `item` and disappears once its lines are read. */
 export function pickup({ item, ...thing }: Thing & { item: string }): Thing {
   const taken = `picked:${thing.id}`
   return {
@@ -25,10 +24,6 @@ export function pickup({ item, ...thing }: Thing & { item: string }): Thing {
   }
 }
 
-/**
- * Solid until interacted with while holding `key`, then gone for good.
- * `lines` play while locked, `opened` (default none) when unlocking. `consume` takes the key.
- */
 export function door({
   key,
   consume = false,

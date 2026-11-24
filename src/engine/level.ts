@@ -1,20 +1,18 @@
 import type { Dyn, Level, State, Thing, Vec } from './types'
 
-/** Player hitbox edge, in tiles. */
+// Hitbox edge, in tiles.
 export const PLAYER_SIZE = 0.7
 
 export type Player = {
   pos: Vec
-  /** Radians clockwise from north (map -y). */
+  // Radians clockwise from north.
   yaw: number
 }
 
-/** Unit map-space direction for a yaw. */
 export const facingOf = (yaw: number): Vec => ({ x: Math.sin(yaw), y: -Math.cos(yaw) })
 
 type Box = { x: number; y: number; w: number; h: number }
 
-/** Validates a level at load time so map typos fail loudly instead of rendering wrong. */
 export function defineLevel(level: Level): Level {
   const width = level.map[0]?.length ?? 0
   level.map.forEach((row, y) => {
@@ -31,7 +29,7 @@ export function defineLevel(level: Level): Level {
 
 export const tileCenter = (v: Vec): Vec => ({ x: v.x + 0.5, y: v.y + 0.5 })
 
-/** Reads a `Dyn` value. `T` must not itself be a function. */
+// `T` must not itself be a function.
 export const resolve = <T>(value: Dyn<T>, state: State): T =>
   typeof value === 'function' ? (value as (state: State) => T)(state) : value
 
@@ -44,7 +42,7 @@ const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y <
 
 const contains = (b: Box, p: Vec) => p.x >= b.x && p.x < b.x + b.w && p.y >= b.y && p.y < b.y + b.h
 
-/** Outside the map counts as solid. */
+// Outside the map counts as solid.
 function solidTile(level: Level, tx: number, ty: number): boolean {
   const ch = level.map[ty]?.[tx]
   return ch === undefined || level.tiles[ch].solid === true
@@ -58,7 +56,7 @@ function blocked(level: Level, things: Thing[], center: Vec): boolean {
   return things.some((t) => (t.solid ?? true) && overlaps(box, boxOf(t)))
 }
 
-/** Moves `pos` by `delta`, resolving each axis separately so the player slides along walls. */
+// Per-axis so the player slides along walls.
 export function move(level: Level, things: Thing[], pos: Vec, delta: Vec): Vec {
   const alongX = { x: pos.x + delta.x, y: pos.y }
   const afterX = blocked(level, things, alongX) ? pos : alongX
@@ -66,7 +64,6 @@ export function move(level: Level, things: Thing[], pos: Vec, delta: Vec): Vec {
   return blocked(level, things, alongY) ? afterX : alongY
 }
 
-/** The thing just in front of the player, else the one they stand on (non-solid things). */
 export function thingAhead(things: Thing[], center: Vec, facing: Vec): Thing | undefined {
   const reach = PLAYER_SIZE / 2 + 0.3
   const probe = { x: center.x + facing.x * reach, y: center.y + facing.y * reach }

@@ -10,13 +10,11 @@ import { PostFX } from './PostFX'
 import type { Ctx, Item, Level, Line, Look, State, View } from './types'
 import { World } from './World'
 
-/** Rendered lines of vertical resolution; the canvas is scaled up with crisp pixels. */
 const RENDER_LINES = 240
 
 const EMPTY: State = { flags: {}, items: new Set(), view: 'top' }
 const DEFAULT_PLAYER: Look = { color: '#ffffff' }
 
-/** Device-pixel ratio that renders `RENDER_LINES` lines at the window's height. */
 function useLowResDpr(): number {
   const [dpr, setDpr] = useState(() => RENDER_LINES / window.innerHeight)
   useEffect(() => {
@@ -42,11 +40,9 @@ type Props = {
   levels: Record<string, Level>
   items: Record<string, Item>
   start: string
-  /** How the player looks in top-down. Defaults to a white box. */
   player?: Look
 }
 
-/** Owns game state: current level, story state, open dialogue, view, and the player. */
 export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const [level, setLevel] = useState(() => levelById(levels, start))
   const [state, setState] = useState(EMPTY)
@@ -56,7 +52,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const dpr = useLowResDpr()
   const things = shownThings(level, state)
 
-  // A line's sound plays once when the line appears (not again when its typing is skipped).
+  // Keyed on line position so skipping the typewriter doesn't replay it.
   const lines = dialogue?.lines
   const index = dialogue?.index
   const line = lines?.[index ?? 0]
@@ -66,7 +62,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   }, [lines, index, lineSound])
 
   useEffect(() => {
-    // Local copy so an `after` callback sees its own changes immediately (e.g. set then goto).
+    // Lets set-then-goto in one callback see the new state.
     let current = state
     const update = (next: State) => {
       current = next
@@ -95,7 +91,6 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
       play: playOnce,
     }
 
-    /** Opens `ls`, or runs `after` straight away when there is nothing to read. */
     const start = (ls: Line[], after: Dialogue['after']) => {
       if (ls.length > 0) return setDialogue({ lines: ls, index: 0, startedAt: performance.now(), after, choice: 0 })
       setDialogue(null)
@@ -124,7 +119,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
           return start(resolve(picked.lines ?? [], current), picked.after ? [picked.after, ...dialogue.after] : dialogue.after)
         if (dialogue.index + 1 < dialogue.lines.length)
           return setDialogue({ ...dialogue, index: dialogue.index + 1, startedAt: now, choice: 0 })
-        // Close before `after` so a `goto` inside it can open the next level's dialogue.
+        // Close first so a goto's enter dialogue isn't overwritten.
         return start([], dialogue.after)
       }
       const p = playerRef.current

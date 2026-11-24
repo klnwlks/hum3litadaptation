@@ -14,13 +14,10 @@ const DIRS: Record<string, Vec> = {
 
 export const INTERACT_KEYS: Record<string, true> = { KeyE: true, Space: true, Enter: true }
 
-/** Moves the highlighted dialogue choice. */
 export const CHOICE_KEYS: Record<string, -1 | 1> = { ArrowUp: -1, KeyW: -1, ArrowDown: 1, KeyS: 1 }
 
-/** Toggles between top-down and 3D. */
 export const VIEW_KEYS: Record<string, true> = { KeyQ: true }
 
-/** Held movement keys, read every frame without re-rendering. */
 export function useHeldKeys() {
   const held = useRef(new Set<string>())
   useEffect(() => {
@@ -43,10 +40,7 @@ export function useHeldKeys() {
   return held
 }
 
-/**
- * Held direction keys as -1/0/1 per axis (y: -1 = up/forward). Opposing keys cancel; W and ArrowUp
- * together still give 1, not 2.
- */
+// -1/0/1 per axis; W + ArrowUp still gives 1.
 export function axes(held: ReadonlySet<string>): Vec {
   let x = 0
   let y = 0

@@ -40,7 +40,7 @@ void main() {
 
   vec2 split = (uv - 0.5) * 0.012 * uAberration;
   vec3 c = vec3(texture2D(tScene, uv + split).r, texture2D(tScene, uv).g, texture2D(tScene, uv - split).b);
-  // The scene target holds linear color; encode first so the effects below act on what is seen.
+  // Target holds linear color; effects act on display values.
   c = linearToOutputTexel(vec4(c, 1.0)).rgb;
 
   c *= 1.0 - uScanlines * 0.5 * (0.5 + 0.5 * sin(gl_FragCoord.y * 3.14159));
@@ -80,7 +80,6 @@ function createPass(): Pass {
   return { target, material, quad, scene: new Scene().add(quad), camera: new OrthographicCamera() }
 }
 
-/** Takes over rendering: draws the lit scene into a texture, then to screen through the effects shader. */
 export function PostFX({ effects }: { effects: Effects }) {
   const passRef = useRef<Pass | null>(null)
 
@@ -95,7 +94,7 @@ export function PostFX({ effects }: { effects: Effects }) {
     }
   }, [])
 
-  // Priority 1 disables R3F's own render, so this is the only draw each frame.
+  // Priority 1 replaces R3F's own render.
   useFrame(({ gl, scene, camera, clock }) => {
     const pass = passRef.current
     if (!pass) return
