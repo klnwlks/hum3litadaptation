@@ -26,6 +26,8 @@ export const sample = defineLevel({
     r: { color: '#141414', ceiling: { color: '#4a0a0a' } },
   },
   ceiling: { color: '#0d0d10', height: 1.5 },
+  // Sound files are not included: drop them in public/sounds/ (missing ones stay silent).
+  ambience: { src: '/sounds/lorem-ambience.ogg', volume: 0.4 },
   spawn: { x: 3, y: 3 },
   enter: [LOREM],
   // Dim room lit by the player; darker in 3D, darker still once 'dolor' is set.
@@ -45,6 +47,7 @@ export const sample = defineLevel({
       at: { x: 1, y: 1 },
       color: '#7a1f1f',
       lines: [{ speaker: 'Lorem', text: LOREM }, LOREM, { speaker: 'Ipsum', text: LOREM }],
+      after: ({ play }) => play('/sounds/lorem-after.ogg'),
     },
     // Tall in 3D; from above, just a square. Says something else when looked at in 3D.
     {
@@ -52,7 +55,8 @@ export const sample = defineLevel({
       at: { x: 6, y: 1 },
       color: '#202020',
       height: 1.4,
-      lines: (s) => (s.view === '3d' ? [{ speaker: 'Ipsum', portrait: '/favicon.svg', text: LOREM }] : [LOREM]),
+      lines: (s) =>
+        s.view === '3d' ? [{ speaker: 'Ipsum', portrait: '/favicon.svg', sound: '/sounds/lorem-sting.ogg', text: LOREM }] : [LOREM],
     },
     // Hangs from the ceiling; exists only in 3D. Non-solid: stand under it and interact.
     {
@@ -82,7 +86,7 @@ export const sample = defineLevel({
       at: { x: 7, y: 4 },
       color: '#5a3a1a',
       lines: [LOREM],
-      opened: [LOREM, LOREM],
+      opened: [{ text: LOREM, sound: '/sounds/lorem-door.ogg' }, LOREM],
     }),
     // Wide, multi-tile.
     { id: 'b', at: { x: 9, y: 1 }, size: { x: 3, y: 1 }, color: '#1f3f7a', lines: [LOREM, LOREM] },
@@ -95,6 +99,8 @@ export const sample = defineLevel({
       after: ({ set }) => set('readB2', true),
       // Flickers until read, then goes out.
       light: (s) => (s.flags.readB2 ? undefined : { color: '#ffd080', radius: 5, flicker: 0.6 }),
+      // Hums while lit; goes quiet with the light.
+      sound: (s) => (s.flags.readB2 ? undefined : { src: '/sounds/lorem-hum.ogg', radius: 6 }),
     },
     // Only exists once 'b2' has been read; gives item 'ipsum'.
     pickup({ id: 'sample.c', item: 'ipsum', at: { x: 10, y: 5 }, color: '#5a1f7a', shown: flag('readB2'), lines: [LOREM] }),
