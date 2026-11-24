@@ -1,12 +1,12 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef, type RefObject } from 'react'
 import type { Group, Mesh, PerspectiveCamera } from 'three'
-import { useSoundscape } from './audio'
+import { playOnce, useSoundscape } from './audio'
 import { axes, useHeldKeys } from './input'
 import { facingOf, move, PLAYER_SIZE, type Player } from './level'
 import { useLighting } from './lighting'
 import { animateMaterials, box, litMaterial, plane } from './material'
-import type { Level, Look, Side, State, Thing, View } from './types'
+import type { Level, Look, Side, State, Thing, Trigger, View } from './types'
 
 const SPEED = 4 // tiles/s
 const TURN_SPEED = 2.6 // rad/s
@@ -19,6 +19,8 @@ const EYE_HEIGHT = 0.5
 const PLAYER_HEIGHT = 0.6
 const DEFAULT_CEILING: Look = { color: '#0a0a0a' }
 const DEFAULT_CEILING_HEIGHT = 1.5
+const STEP_LENGTH = 0.6 // tiles per footstep
+const BOB = 0.035
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
@@ -31,12 +33,15 @@ type Props = {
   paused: boolean
   viewTarget: View
   onView: (view: View) => void
+  onTrigger: (trigger: Trigger) => void
 }
 
-export function World({ level, things, state, playerRef, playerLook, paused, viewTarget, onView }: Props) {
+export function World({ level, things, state, playerRef, playerLook, paused, viewTarget, onView, onTrigger }: Props) {
   const held = useHeldKeys()
   const body = useRef<Group>(null)
   const tilt = useRef(state.view === '3d' ? 1 : 0)
+  const walked = useRef(0)
+  const inside = useRef(new Set<Trigger>())
   const ceilingHeight = level.ceiling?.height ?? DEFAULT_CEILING_HEIGHT
   useLighting(level, things, state, playerRef)
   useSoundscape(level, things, state, playerRef)
@@ -64,6 +69,21 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
     }
 
     const { pos, yaw } = playerRef.current
+    const moved = Math.hypot(pos.x - player.pos.x, pos.y - player.pos.y)
+    if (Math.floor((walked.current + moved) / STEP_LENGTH) > Math.floor(walked.current / STEP_LENGTH)) {
+      const sound = level.tiles[level.map[Math.floor(pos.y)][Math.floor(pos.x)]].step
+      if (sound) playOnce(sound, 0.5)
+    }
+    walked.current += moved
+
+    for (const trigger of level.triggers ?? []) {
+      const size = trigger.size ?? { x: 1, y: 1 }
+      const isIn = pos.x >= trigger.at.x && pos.x < trigger.at.x + size.x && pos.y >= trigger.at.y && pos.y < trigger.at.y + size.y
+      if (isIn && !inside.current.has(trigger) && (trigger.when?.(state) ?? true)) onTrigger(trigger)
+      if (isIn) inside.current.add(trigger)
+      else inside.current.delete(trigger)
+    }
+
     if (body.current) {
       body.current.position.set(pos.x, 0, pos.y)
       body.current.visible = t < 0.5
@@ -72,7 +92,9 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
     const camera = three.camera as PerspectiveCamera
     camera.fov = lerp(TOP_FOV, EYE_FOV, eased)
     camera.updateProjectionMatrix()
-    camera.position.set(pos.x, Math.exp(lerp(Math.log(TOP_HEIGHT), Math.log(EYE_HEIGHT), eased)), pos.y)
+    // Bob dips to 0 on each footfall; a slow sway keeps the view alive when standing still.
+    const bob = Math.abs(Math.sin((walked.current * Math.PI) / STEP_LENGTH)) * BOB + Math.sin(three.clock.elapsedTime * 1.3) * 0.006
+    camera.position.set(pos.x, Math.exp(lerp(Math.log(TOP_HEIGHT), Math.log(EYE_HEIGHT), eased)) + bob * eased, pos.y)
     // Wrapped yaw so the tilt turns the short way.
     camera.rotation.set(lerp(-Math.PI / 2, 0, eased), -Math.atan2(Math.sin(yaw), Math.cos(yaw)) * eased, 0, 'YXZ')
   })

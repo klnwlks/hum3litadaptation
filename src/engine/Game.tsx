@@ -51,6 +51,13 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const playerRef = useRef<Player>({ pos: tileCenter(level.spawn), yaw: Math.PI })
   const dpr = useLowResDpr()
   const things = shownThings(level, state)
+  // Latest ctx, for timers and triggers that fire outside key handling.
+  const ctxRef = useRef<Ctx | null>(null)
+  const timers = useRef(new Set<number>())
+  useEffect(() => {
+    const pending = timers.current
+    return () => pending.forEach(clearTimeout)
+  }, [])
 
   // Keyed on line position so skipping the typewriter doesn't replay it.
   const lines = dialogue?.lines
@@ -89,7 +96,16 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         setDialogue(opening(next, current))
       },
       play: playOnce,
+      say: (ls) => start(resolve(ls, current), []),
+      wait(seconds, fn) {
+        const id = window.setTimeout(() => {
+          timers.current.delete(id)
+          if (ctxRef.current) fn(ctxRef.current)
+        }, seconds * 1000)
+        timers.current.add(id)
+      },
     }
+    ctxRef.current = ctx
 
     const start = (ls: Line[], after: Dialogue['after']) => {
       if (ls.length > 0) return setDialogue({ lines: ls, index: 0, startedAt: performance.now(), after, choice: 0 })
@@ -148,6 +164,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
           paused={dialogue !== null}
           viewTarget={viewTarget}
           onView={(view) => setState((s) => ({ ...s, view }))}
+          onTrigger={(trigger) => ctxRef.current && trigger.enter(ctxRef.current)}
         />
         <PostFX effects={level.effects ? resolve(level.effects, state) : {}} />
       </Canvas>

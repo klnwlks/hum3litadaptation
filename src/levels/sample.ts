@@ -2,6 +2,7 @@ import { door, flag, has, pickup } from '../engine/helpers'
 import { defineLevel } from '../engine/level'
 
 const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.'
+const STEP = '/sounds/lorem-step.ogg'
 
 // Placeholder frames: plain colored squares.
 const square = (color: string) =>
@@ -23,10 +24,10 @@ export const sample = defineLevel({
   ],
   tiles: {
     '#': { color: '#3a3a3a', solid: true },
-    '.': { color: '#141414' },
+    '.': { color: '#141414', step: STEP },
     X: { color: '#3a3a3a', solid: true, faces: { s: { color: '#5a0f0f', image: ['/favicon.svg', square('#5a0f0f')], fps: 2 } } },
-    p: { color: '#141414', image: [square('#141414'), square('#3a0a0a'), square('#141414'), square('#0a0a3a')], fps: 3 },
-    r: { color: '#141414', ceiling: { color: '#4a0a0a', image: '/favicon.svg' } },
+    p: { color: '#141414', step: STEP, image: [square('#141414'), square('#3a0a0a'), square('#141414'), square('#0a0a3a')], fps: 3 },
+    r: { color: '#141414', step: STEP, ceiling: { color: '#4a0a0a', image: '/favicon.svg' } },
   },
   ceiling: { color: '#0d0d10', height: 1.5 },
   // Sound files aren't shipped; missing ones stay silent.
@@ -34,13 +35,26 @@ export const sample = defineLevel({
   spawn: { x: 3, y: 3 },
   enter: [LOREM],
   lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : s.view === '3d' ? 0.08 : 0.15, player: { radius: 4 } }),
+  fog: (s) => ({ distance: s.view === '3d' ? 5 : 9 }),
   effects: (s) => ({
     vignette: 0.7,
     grain: 0.25,
     scanlines: 0.2,
+    dither: 0.6,
     aberration: s.flags.dolor ? 1 : 0.15,
     wobble: s.flags.dolor ? 1 : 0,
   }),
+  triggers: [
+    {
+      at: { x: 3, y: 6 },
+      when: (s) => !s.flags.crossed,
+      enter: ({ set, say, wait }) => {
+        set('crossed', true)
+        say([LOREM])
+        wait(5, (ctx) => ctx.say([{ speaker: 'Ipsum', text: LOREM }]))
+      },
+    },
+  ],
   things: [
     {
       id: 'a',

@@ -25,6 +25,10 @@ export interface Ctx {
   take(item: string): void
   goto(level: string, at?: Vec): void
   play(src: string, volume?: number): void
+  // Replaces any open dialogue.
+  say(lines: Lines): void
+  // `fn` gets the ctx current when it fires.
+  wait(seconds: number, fn: (ctx: Ctx) => void): void
 }
 
 // Picking a choice replaces the rest of the conversation; its `after` runs before the thing's.
@@ -66,6 +70,8 @@ export interface Tile extends Look {
   solid?: boolean
   faces?: Partial<Record<Side, Look>>
   ceiling?: Look
+  // Footstep sound while walking on this tile.
+  step?: string
 }
 
 export interface Light {
@@ -83,6 +89,12 @@ export interface Lighting {
   player?: Light
 }
 
+// Fades to `color` (default black) by `distance` tiles from the player.
+export interface Fog {
+  color?: string
+  distance: number
+}
+
 // Each 0 to 1.
 export interface Effects {
   vignette?: number
@@ -90,6 +102,7 @@ export interface Effects {
   scanlines?: number
   aberration?: number
   wobble?: number
+  dither?: number
 }
 
 export interface Thing extends Look {
@@ -108,6 +121,14 @@ export interface Thing extends Look {
   sound?: Dyn<Emitter | undefined>
 }
 
+// Fires `enter` each time the player walks into the area while `when` holds.
+export interface Trigger {
+  at: Vec
+  size?: Vec
+  when?: Cond
+  enter: (ctx: Ctx) => void
+}
+
 export interface Level {
   id: string
   map: string[]
@@ -119,4 +140,6 @@ export interface Level {
   effects?: Dyn<Effects>
   ceiling?: Look & { height?: number }
   ambience?: Dyn<Sound | undefined>
+  fog?: Dyn<Fog | undefined>
+  triggers?: Trigger[]
 }

@@ -54,12 +54,16 @@ export const lightingUniforms = {
   uLightCount: { value: 0 },
   uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new Vector3()) },
   uLightColor: { value: Array.from({ length: MAX_LIGHTS }, () => new Vector3()) },
+  uEye: { value: new Vector2() },
+  uFogColor: { value: new Color() },
+  uFogDistance: { value: 0 },
 }
 
 const scratchColor = new Color()
 
 export function useLighting(level: Level, things: Thing[], state: State, playerRef: RefObject<Player>) {
   const lighting = level.lighting ? resolve(level.lighting, state) : {}
+  const fog = level.fog ? resolve(level.fog, state) : undefined
   const placed = thingLights(things, state)
   const map = useMemo(() => occupancy(level, things, state), [level, things, state])
   useEffect(() => () => map.dispose(), [map])
@@ -78,6 +82,10 @@ export function useLighting(level: Level, things: Thing[], state: State, playerR
       u.uLightColor.value[i].set(scratchColor.r, scratchColor.g, scratchColor.b)
     }
     u.uLightCount.value = count
+    const { pos } = playerRef.current
+    u.uEye.value.set(pos.x, pos.y)
+    u.uFogColor.value.set(fog?.color ?? '#000000')
+    u.uFogDistance.value = fog?.distance ?? 0
   })
 }
 
@@ -91,6 +99,14 @@ uniform vec3 uAmbient;
 uniform int uLightCount;
 uniform vec3 uLightPos[MAX_LIGHTS]; // xy: tile position, z: radius
 uniform vec3 uLightColor[MAX_LIGHTS]; // linear color * intensity
+uniform vec2 uEye;
+uniform vec3 uFogColor;
+uniform float uFogDistance; // 0 = off
+
+vec3 fogged(vec3 color, vec2 tile) {
+  if (uFogDistance <= 0.0) return color;
+  return mix(color, uFogColor, smoothstep(0.0, uFogDistance, distance(tile, uEye)));
+}
 
 bool blocked(ivec2 cell) {
   if (any(lessThan(cell, ivec2(0))) || any(greaterThanEqual(cell, uMapSize))) return true;

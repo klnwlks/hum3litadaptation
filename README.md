@@ -31,14 +31,16 @@ A level is:
 | ---------- | ------- |
 | `id`       | Key used by `goto`. |
 | `map`      | One string per row, one character per tile. All rows equal width. |
-| `tiles`    | Character → `{ color, image?, solid?, faces?, ceiling? }`. Solid tiles are walls. `faces: { n?, e?, s?, w? }` gives a wall side its own look; `ceiling` overrides the ceiling above a floor tile. |
+| `tiles`    | Character → `{ color, image?, solid?, faces?, ceiling?, step? }`. Solid tiles are walls. `faces: { n?, e?, s?, w? }` gives a wall side its own look; `ceiling` overrides the ceiling above a floor tile; `step` is a footstep sound played while walking on it. |
 | `spawn`    | Tile where the player starts. |
 | `things`   | Interactables (below). |
 | `enter`    | `Dyn<Line[]>` played every time the level loads. |
 | `ceiling`  | `{ color, image?, height? }`. Seen only in 3D; `height` (default 1.5) is also the wall height. |
 | `lighting` | `Dyn<{ ambient?, ambientColor?, player? }>`. `ambient` 0 (black) to 1 (unshaded, the default); `player` is a light carried by the player. |
-| `effects`  | `Dyn<{ vignette?, grain?, scanlines?, aberration?, wobble? }>`, each 0 to 1. |
+| `effects`  | `Dyn<{ vignette?, grain?, scanlines?, aberration?, wobble?, dither? }>`, each 0 to 1. `dither` reduces colors with an ordered (Bayer) pattern. |
+| `fog`      | `Dyn<{ color?, distance } \| undefined>`: fades everything to `color` (default black) by `distance` tiles from the player. In top-down this reads as a vision radius. |
 | `ambience` | `Dyn<{ src, volume? } \| undefined>`: looping background sound. |
+| `triggers` | `{ at, size?, when?, enter(ctx) }[]`: `enter` fires each time the player walks into the area while `when` holds. Set a flag in `enter` and test it in `when` to fire once. |
 
 A thing is:
 
@@ -58,7 +60,9 @@ A thing is:
 
 A `Line` is a string or `{ speaker?, portrait?, sound?, text, choices? }`. `portrait` is an image shown beside the text; `sound` plays once when the line appears. A choice is `{ text, requires?, lines?, after? }`: `requires: (state) => boolean` hides it when false; picking it replaces the rest of the conversation with its `lines`, and its `after` runs before the thing's.
 
-`ctx` has `state`, `set(flag, value)`, `give(item)`, `take(item)`, `goto(levelId, tile?)` (tile defaults to that level's `spawn`), and `play(src, volume?)`.
+`ctx` has `state`, `set(flag, value)`, `give(item)`, `take(item)`, `goto(levelId, tile?)` (tile defaults to that level's `spawn`), `play(src, volume?)`, `say(lines)` (opens dialogue, replacing any open one), and `wait(seconds, fn)` (`fn` gets the ctx current when it fires).
+
+In 3D the camera bobs with each step and sways slightly when standing still.
 
 The player's top-down look is the `player` prop of `<Game>` (default a white box); the player is invisible in 3D.
 

@@ -64,7 +64,7 @@ void main() {
 #endif
   // Nudge inward so wall faces sample their own (blocked) cell.
   vec2 tile = vWorld.xz - n.xz * 0.01;
-  gl_FragColor = vec4(base.rgb * lightAt(tile, n), 1.0);
+  gl_FragColor = vec4(fogged(base.rgb * lightAt(tile, n), vWorld.xz), 1.0);
 }`
 
 const loader = new TextureLoader()

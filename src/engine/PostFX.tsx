@@ -27,10 +27,17 @@ uniform float uGrain;
 uniform float uScanlines;
 uniform float uAberration;
 uniform float uWobble;
+uniform float uDither;
 varying vec2 vUv;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float bayer4(vec2 p) {
+  ivec2 i = ivec2(mod(p, 4.0));
+  int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+  return (float(m[i.y * 4 + i.x]) + 0.5) / 16.0;
 }
 
 void main() {
@@ -46,6 +53,11 @@ void main() {
   c *= 1.0 - uScanlines * 0.5 * (0.5 + 0.5 * sin(gl_FragCoord.y * 3.14159));
   c += (hash(gl_FragCoord.xy + fract(uTime) * 97.0) - 0.5) * 0.25 * uGrain;
   c *= 1.0 - uVignette * smoothstep(0.25, 0.75, distance(vUv, vec2(0.5)));
+  // Ordered dither down to 32..2 levels per channel.
+  if (uDither > 0.0) {
+    float steps = mix(31.0, 1.0, uDither);
+    c = floor(clamp(c, 0.0, 1.0) * steps + bayer4(gl_FragCoord.xy)) / steps;
+  }
   gl_FragColor = vec4(c, 1.0);
 }`
 
@@ -72,6 +84,7 @@ function createPass(): Pass {
       uScanlines: { value: 0 },
       uAberration: { value: 0 },
       uWobble: { value: 0 },
+      uDither: { value: 0 },
     },
     depthTest: false,
     depthWrite: false,
@@ -112,6 +125,7 @@ export function PostFX({ effects }: { effects: Effects }) {
     u.uScanlines.value = effects.scanlines ?? 0
     u.uAberration.value = effects.aberration ?? 0
     u.uWobble.value = effects.wobble ?? 0
+    u.uDither.value = effects.dither ?? 0
     gl.render(pass.scene, pass.camera)
   }, 1)
 
