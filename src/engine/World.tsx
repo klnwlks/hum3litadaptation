@@ -25,7 +25,6 @@ export function World({ level, things, player, paused }: Props) {
   const body = useRef<Mesh>(null)
 
   useFrame(({ camera }, dt) => {
-    const p = player.current
     if (!paused) {
       const dir = heading(held.current)
       if (dir.x !== 0 || dir.y !== 0) {
