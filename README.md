@@ -1,32 +1,48 @@
-# React + TypeScript + Vite
+# hum3
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Top-down exploration framework: walk around, interact with things, read dialogue.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Move: arrows / WASD. Interact and advance dialogue: E / Space / Enter.
+
+## Making a level
+
+1. Create `src/levels/<name>.ts` and export `defineLevel({...})`. See `src/levels/sample.ts`.
+2. Register it in `src/levels/index.ts`.
+
+A level is:
+
+| Field    | Meaning |
+| -------- | ------- |
+| `id`     | Key used by `goto`. |
+| `map`    | One string per row, one character per tile. All rows equal width. |
+| `tiles`  | Character → `{ color, solid? }`. |
+| `spawn`  | Tile where the player starts. |
+| `things` | Interactables (below). |
+| `enter`  | Optional lines played every time the level loads. |
+
+A thing is:
+
+| Field    | Meaning |
+| -------- | ------- |
+| `id`     | Unique within the level. |
+| `at`     | Top-left tile. `size` defaults to `{ x: 1, y: 1 }`. |
+| `color`  | Fill color. |
+| `solid`  | Blocks movement; default `true`. Non-solid things trigger when stood on. |
+| `shown`  | `(flags) => boolean`; hidden things don't render, collide, or interact. |
+| `lines`  | `string[]`, or `(flags) => string[]` to vary with story state. |
+| `after`  | `({ flags, set, goto }) => void`, runs when the last line is dismissed. |
+
+Flags are a flat `Record<string, boolean | number | string>` shared across levels. `goto(levelId, tile?)` switches level; the tile defaults to that level's `spawn`.
+
+`defineLevel` throws on ragged rows, unknown tile characters, and duplicate thing ids.
+
+## Layout
+
+- `src/engine/types.ts`: level and thing types.
+- `src/engine/level.ts`: validation, collision, interaction lookup.
+- `src/engine/World.tsx`: rendering and movement.
+- `src/engine/Game.tsx`: level, flags, and dialogue state.
