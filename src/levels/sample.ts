@@ -71,6 +71,8 @@ export const sample = defineLevel({
         },
       ],
     },
+    // Drawn from an image; `color` shows until it loads.
+    { id: 'f', at: { x: 12, y: 3 }, color: '#444444', image: '/favicon.svg', lines: [LOREM] },
     // Non-solid floor marker: stand on it and interact to be moved elsewhere.
     {
       id: 'd',

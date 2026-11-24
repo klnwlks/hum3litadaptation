@@ -40,23 +40,28 @@ export interface Choice {
 export type Line = string | { speaker?: string; text: string; choices?: Choice[] }
 export type Lines = Line[] | ((state: State) => Line[])
 
-/** How a held item looks in the inventory strip. */
-export interface Item {
+/**
+ * Drawn as `image` (a URL, e.g. a file in public/) stretched over the footprint when given,
+ * else as a `color` square. `color` also shows while the image loads.
+ */
+export interface Look {
   color: string
+  image?: string
 }
 
-export interface Tile {
-  color: string
+/** How a held item looks in the inventory strip. */
+export type Item = Look
+
+export interface Tile extends Look {
   solid?: boolean
 }
 
-export interface Thing {
+export interface Thing extends Look {
   /** Unique within the level; `pickup`/`door` also use it as a flag name, so keep those unique across levels. */
   id: string
   at: Vec
   /** Defaults to 1x1. */
   size?: Vec
-  color: string
   /** Blocks movement. Defaults to true. */
   solid?: boolean
   /** Hidden things neither render, collide, nor interact. Defaults to always shown. */

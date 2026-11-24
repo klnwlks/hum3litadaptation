@@ -1,9 +1,9 @@
-import { useFrame } from '@react-three/fiber'
-import { useRef, type RefObject } from 'react'
-import type { Mesh } from 'three'
+import { useFrame, useLoader } from '@react-three/fiber'
+import { Suspense, useRef, type RefObject } from 'react'
+import { NearestFilter, TextureLoader, type Mesh } from 'three'
 import { heading, useHeldKeys } from './input'
 import { move, PLAYER_SIZE } from './level'
-import type { Level, Thing, Vec } from './types'
+import type { Level, Look, Thing, Vec } from './types'
 
 /** Tiles per second. */
 const SPEED = 4
@@ -42,10 +42,10 @@ export function World({ level, things, playerRef, paused }: Props) {
   return (
     <>
       {level.map.flatMap((row, y) =>
-        [...row].map((ch, x) => <Rect key={`${x},${y}`} at={{ x, y }} color={level.tiles[ch].color} z={0} />),
+        [...row].map((ch, x) => <Rect key={`${x},${y}`} at={{ x, y }} look={level.tiles[ch]} z={0} />),
       )}
       {things.map((t) => (
-        <Rect key={t.id} at={t.at} size={t.size} color={t.color} z={1} />
+        <Rect key={t.id} at={t.at} size={t.size} look={t} z={1} />
       ))}
       <mesh ref={body}>
         <planeGeometry args={[PLAYER_SIZE, PLAYER_SIZE]} />
@@ -55,11 +55,24 @@ export function World({ level, things, playerRef, paused }: Props) {
   )
 }
 
-function Rect({ at, size = { x: 1, y: 1 }, color, z }: { at: Vec; size?: Vec; color: string; z: number }) {
+function Rect({ at, size = { x: 1, y: 1 }, look, z }: { at: Vec; size?: Vec; look: Look; z: number }) {
+  const plain = <meshBasicMaterial color={look.color} />
   return (
     <mesh position={[at.x + size.x / 2, -(at.y + size.y / 2), z]}>
       <planeGeometry args={[size.x, size.y]} />
-      <meshBasicMaterial color={color} />
+      {look.image ? (
+        <Suspense fallback={plain}>
+          <ImageMaterial url={look.image} />
+        </Suspense>
+      ) : (
+        plain
+      )}
     </mesh>
   )
+}
+
+/** Nearest-neighbour sampling keeps pixel art crisp when scaled up. */
+function ImageMaterial({ url }: { url: string }) {
+  const texture = useLoader(TextureLoader, url)
+  return <meshBasicMaterial map={texture} map-magFilter={NearestFilter} transparent />
 }
