@@ -2,17 +2,20 @@ import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import { DialogueBox } from './DialogueBox'
 import { INTERACT_KEYS } from './input'
+import { Inventory } from './Inventory'
 import { lines, shownThings, thingAhead, tileCenter } from './level'
-import type { Ctx, Flags, Level, Thing } from './types'
+import type { Ctx, Item, Level, State, Thing } from './types'
 import { World, type Player } from './World'
 
 /** Screen pixels per tile. */
 const ZOOM = 48
 
+const EMPTY: State = { flags: {}, items: new Set() }
+
 type Dialogue = { lines: string[]; index: number; after?: Thing['after'] }
 
-function opening(level: Level, flags: Flags): Dialogue | null {
-  const ls = level.enter ? lines(level.enter, flags) : []
+function opening(level: Level, state: State): Dialogue | null {
+  const ls = level.enter ? lines(level.enter, state) : []
   return ls.length > 0 ? { lines: ls, index: 0 } : null
 }
 
@@ -22,24 +25,40 @@ function levelById(levels: Record<string, Level>, id: string): Level {
   return level
 }
 
-/** Owns game state: current level, story flags, open dialogue, and the player. */
-export function Game({ levels, start }: { levels: Record<string, Level>; start: string }) {
+type Props = {
+  levels: Record<string, Level>
+  items: Record<string, Item>
+  start: string
+}
+
+/** Owns game state: current level, story state, open dialogue, and the player. */
+export function Game({ levels, items, start }: Props) {
   const [level, setLevel] = useState(() => levelById(levels, start))
-  const [flags, setFlags] = useState<Flags>({})
-  const [dialogue, setDialogue] = useState(() => opening(level, {}))
+  const [state, setState] = useState(EMPTY)
+  const [dialogue, setDialogue] = useState(() => opening(level, EMPTY))
   const playerRef = useRef<Player>({ pos: tileCenter(level.spawn), facing: { x: 0, y: 1 } })
-  const things = shownThings(level, flags)
+  const things = shownThings(level, state)
 
   useEffect(() => {
-    // Local copy so an `after` callback sees its own `set` immediately (e.g. set then goto).
-    let current = flags
+    // Local copy so an `after` callback sees its own changes immediately (e.g. set then goto).
+    let current = state
+    const update = (next: State) => {
+      current = next
+      setState(next)
+    }
     const ctx: Ctx = {
-      get flags() {
+      get state() {
         return current
       },
-      set(flag, value) {
-        current = { ...current, [flag]: value }
-        setFlags(current)
+      set: (flag, value) => update({ ...current, flags: { ...current.flags, [flag]: value } }),
+      give(item) {
+        if (!(item in items)) throw new Error(`unknown item '${item}'`)
+        update({ ...current, items: new Set(current.items).add(item) })
+      },
+      take(item) {
+        const held = new Set(current.items)
+        held.delete(item)
+        update({ ...current, items: held })
       },
       goto(id, at) {
         const next = levelById(levels, id)
@@ -67,13 +86,14 @@ export function Game({ levels, start }: { levels: Record<string, Level>; start: 
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [dialogue, flags, level, levels])
+  }, [dialogue, items, level, levels, state])
 
   return (
     <div className="relative h-screen w-screen bg-black">
       <Canvas orthographic flat gl={{ antialias: false }} camera={{ zoom: ZOOM, position: [0, 0, 10] }}>
         <World level={level} things={things} playerRef={playerRef} paused={dialogue !== null} />
       </Canvas>
+      <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox text={dialogue.lines[dialogue.index]} />}
     </div>
   )
