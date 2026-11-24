@@ -80,6 +80,20 @@ export interface Lighting {
   player?: Light
 }
 
+/** Full-screen post effects, each 0 (off) to 1 (strong). All default 0. */
+export interface Effects {
+  /** Darkens toward the screen edges. */
+  vignette?: number
+  /** Animated film noise. */
+  grain?: number
+  /** Horizontal CRT lines. */
+  scanlines?: number
+  /** Splits red and blue channels away from the center. */
+  aberration?: number
+  /** Wavy screen distortion. */
+  wobble?: number
+}
+
 export interface Thing extends Look {
   /** Unique within the level; `pickup`/`door` also use it as a flag name, so keep those unique across levels. */
   id: string
@@ -108,4 +122,5 @@ export interface Level {
   /** Dialogue played every time the level loads. */
   enter?: Lines
   lighting?: Dyn<Lighting>
+  effects?: Dyn<Effects>
 }

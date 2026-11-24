@@ -5,6 +5,7 @@ import { DialogueBox } from './DialogueBox'
 import { CHOICE_KEYS, INTERACT_KEYS } from './input'
 import { Inventory } from './Inventory'
 import { resolve, shownThings, thingAhead, tileCenter } from './level'
+import { PostFX } from './PostFX'
 import type { Ctx, Item, Level, Line, State } from './types'
 import { World, type Player } from './World'
 
@@ -106,6 +107,7 @@ export function Game({ levels, items, start }: Props) {
     <div className="relative h-screen w-screen bg-black">
       <Canvas orthographic flat gl={{ antialias: false }} camera={{ zoom: ZOOM, position: [0, 0, 10] }}>
         <World level={level} things={things} state={state} playerRef={playerRef} paused={dialogue !== null} />
+        <PostFX effects={level.effects ? resolve(level.effects, state) : {}} />
       </Canvas>
       <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}

@@ -25,6 +25,14 @@ export const sample = defineLevel({
   enter: [LOREM],
   // Dim room lit by the player; darker still once 'dolor' is set.
   lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : 0.15, player: { radius: 4 } }),
+  // Constant film look; heavier distortion once 'dolor' is set.
+  effects: (s) => ({
+    vignette: 0.7,
+    grain: 0.25,
+    scanlines: 0.2,
+    aberration: s.flags.dolor ? 1 : 0.15,
+    wobble: s.flags.dolor ? 1 : 0,
+  }),
   things: [
     // Plain: same lines every time, with speakers.
     {
