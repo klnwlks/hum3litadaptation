@@ -15,12 +15,12 @@ type Props = {
   level: Level
   /** Things currently shown; hidden ones are already filtered out. */
   things: Thing[]
-  player: RefObject<Player>
+  playerRef: RefObject<Player>
   paused: boolean
 }
 
 /** Renders the level and drives player movement. World y grows downward, so it is negated for three.js. */
-export function World({ level, things, player, paused }: Props) {
+export function World({ level, things, playerRef, paused }: Props) {
   const held = useHeldKeys()
   const body = useRef<Mesh>(null)
 
@@ -30,12 +30,13 @@ export function World({ level, things, player, paused }: Props) {
       if (dir.x !== 0 || dir.y !== 0) {
         // Clamp so a stalled frame (tab switch) cannot tunnel through walls.
         const dist = SPEED * Math.min(dt, 0.1)
-        p.facing = dir
-        p.pos = move(level, things, p.pos, { x: dir.x * dist, y: dir.y * dist })
+        const pos = move(level, things, playerRef.current.pos, { x: dir.x * dist, y: dir.y * dist })
+        playerRef.current = { pos, facing: dir }
       }
     }
-    body.current?.position.set(p.pos.x, -p.pos.y, 2)
-    camera.position.set(p.pos.x, -p.pos.y, 10)
+    const { pos } = playerRef.current
+    body.current?.position.set(pos.x, -pos.y, 2)
+    camera.position.set(pos.x, -pos.y, 10)
   })
 
   return (
