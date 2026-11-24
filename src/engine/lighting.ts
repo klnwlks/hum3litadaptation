@@ -1,17 +1,19 @@
-import { DataTexture, NearestFilter, RGBAFormat } from 'three'
-import { resolve } from './level'
+import { useFrame } from '@react-three/fiber'
+import { useEffect, useMemo, type RefObject } from 'react'
+import { Color, DataTexture, NearestFilter, RGBAFormat, Vector2, Vector3 } from 'three'
+import { resolve, type Player } from './level'
 import type { Level, Light, State, Thing, Vec } from './types'
 
 /** Lights past this many (player light first, then things in level order) are ignored. */
 export const MAX_LIGHTS = 16
 
-export type PlacedLight = { at: Vec; light: Light }
+type PlacedLight = { at: Vec; light: Light }
 
 /**
  * One texel per tile, red = 255 where light is blocked: solid tiles, and solid things that do not
  * emit light themselves (so a lamp never shadows its own glow).
  */
-export function occupancy(level: Level, things: Thing[], state: State): DataTexture {
+function occupancy(level: Level, things: Thing[], state: State): DataTexture {
   const width = level.map[0].length
   const height = level.map.length
   const data = new Uint8Array(width * height * 4)
@@ -35,7 +37,7 @@ export function occupancy(level: Level, things: Thing[], state: State): DataText
 }
 
 /** Lights emitted by shown things, placed at each thing's center. */
-export function thingLights(things: Thing[], state: State): PlacedLight[] {
+function thingLights(things: Thing[], state: State): PlacedLight[] {
   const placed: PlacedLight[] = []
   for (const t of things) {
     const light = t.light && resolve(t.light, state)
@@ -47,14 +49,51 @@ export function thingLights(things: Thing[], state: State): PlacedLight[] {
 }
 
 /** Random dips in brightness; 1 when steady. Called once per light per frame. */
-export const flickerScale = (flicker: number): number =>
+const flickerScale = (flicker: number): number =>
   flicker > 0 && Math.random() < flicker * 0.2 ? 1 - flicker * Math.random() : 1
 
+/** Uniform objects shared by reference with every lit material; `useLighting` updates them each frame. */
+export const lightingUniforms = {
+  tMap: { value: null as DataTexture | null },
+  uMapSize: { value: new Vector2() },
+  uAmbient: { value: new Color() },
+  uLightCount: { value: 0 },
+  uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new Vector3()) },
+  uLightColor: { value: Array.from({ length: MAX_LIGHTS }, () => new Vector3()) },
+}
+
+const scratchColor = new Color()
+
+/** Feeds the level's occupancy grid, ambient, and lights into `lightingUniforms`. */
+export function useLighting(level: Level, things: Thing[], state: State, playerRef: RefObject<Player>) {
+  const lighting = level.lighting ? resolve(level.lighting, state) : {}
+  const placed = thingLights(things, state)
+  const map = useMemo(() => occupancy(level, things, state), [level, things, state])
+  useEffect(() => () => map.dispose(), [map])
+
+  useFrame(() => {
+    const u = lightingUniforms
+    u.tMap.value = map
+    u.uMapSize.value.set(map.image.width, map.image.height)
+    u.uAmbient.value.set(lighting.ambientColor ?? '#ffffff').multiplyScalar(lighting.ambient ?? 1)
+    const lights = lighting.player ? [{ at: playerRef.current.pos, light: lighting.player }, ...placed] : placed
+    const count = Math.min(lights.length, MAX_LIGHTS)
+    for (let i = 0; i < count; i++) {
+      const { at, light } = lights[i]
+      scratchColor.set(light.color ?? '#ffffff').multiplyScalar((light.intensity ?? 1) * flickerScale(light.flicker ?? 0))
+      u.uLightPos.value[i].set(at.x, at.y, light.radius ?? 4)
+      u.uLightColor.value[i].set(scratchColor.r, scratchColor.g, scratchColor.b)
+    }
+    u.uLightCount.value = count
+  })
+}
+
 /**
- * GLSL for `vec3 lightAt(vec2 tile)`: ambient plus every light that has a clear line to `tile`.
- * Tile coordinates, y down. Rays walk the occupancy grid cell by cell (DDA) and skip their starting
- * cell. A blocked cell is tested from its point nearest the light, so a wall face turned toward a
- * light is lit evenly instead of in slivers.
+ * GLSL for `vec3 lightAt(vec2 tile, vec3 normal)`: ambient plus every light with a clear line to
+ * `tile` (map coordinates, y down; world xz). Lighting is flat like Doom's: height is ignored.
+ * Rays walk the occupancy grid cell by cell (DDA) and skip their starting cell. A blocked cell is
+ * tested from its point nearest the light, so wall faces light evenly; upright faces also dim by
+ * how directly they face the light.
  */
 export const lightingGlsl = /* glsl */ `
 #define MAX_LIGHTS ${MAX_LIGHTS}
@@ -93,18 +132,21 @@ float visible(vec2 from, vec2 to) {
   return 1.0;
 }
 
-vec3 lightAt(vec2 tile) {
+vec3 lightAt(vec2 tile, vec3 normal) {
   vec3 sum = uAmbient;
   ivec2 own = ivec2(floor(tile));
   bool inWall = blocked(own);
+  bool upright = abs(normal.y) < 0.5;
   for (int i = 0; i < MAX_LIGHTS; i++) {
     if (i >= uLightCount) break;
     vec2 light = uLightPos[i].xy;
     float dist = distance(tile, light);
     if (dist >= uLightPos[i].z) continue;
+    float facing = upright ? max(dot(normal.xz, (light - tile) / max(dist, 1e-4)), 0.0) : 1.0;
+    if (facing <= 0.0) continue;
     float falloff = 1.0 - dist / uLightPos[i].z;
     vec2 from = inWall ? clamp(light, vec2(own) + 0.001, vec2(own) + 0.999) : tile;
-    sum += uLightColor[i] * falloff * falloff * visible(from, light);
+    sum += uLightColor[i] * falloff * falloff * facing * visible(from, light);
   }
   return sum;
 }

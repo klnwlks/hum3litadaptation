@@ -17,6 +17,9 @@ export const INTERACT_KEYS: Record<string, true> = { KeyE: true, Space: true, En
 /** Moves the highlighted dialogue choice. */
 export const CHOICE_KEYS: Record<string, -1 | 1> = { ArrowUp: -1, KeyW: -1, ArrowDown: 1, KeyS: 1 }
 
+/** Toggles between top-down and 3D. */
+export const VIEW_KEYS: Record<string, true> = { KeyQ: true }
+
 /** Held movement keys, read every frame without re-rendering. */
 export function useHeldKeys() {
   const held = useRef(new Set<string>())
@@ -40,17 +43,16 @@ export function useHeldKeys() {
   return held
 }
 
-/** Unit-length direction from held keys; zero vector when idle or opposing keys cancel. */
-export function heading(held: ReadonlySet<string>): Vec {
+/**
+ * Held direction keys as -1/0/1 per axis (y: -1 = up/forward). Opposing keys cancel; W and ArrowUp
+ * together still give 1, not 2.
+ */
+export function axes(held: ReadonlySet<string>): Vec {
   let x = 0
   let y = 0
   for (const code of held) {
     x += DIRS[code].x
     y += DIRS[code].y
   }
-  // W and ArrowUp together must not double speed.
-  x = Math.sign(x)
-  y = Math.sign(y)
-  const len = Math.hypot(x, y) || 1
-  return { x: x / len, y: y / len }
+  return { x: Math.sign(x), y: Math.sign(y) }
 }

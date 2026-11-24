@@ -2,17 +2,29 @@ import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import { choicesOf, fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
-import { CHOICE_KEYS, INTERACT_KEYS } from './input'
+import { CHOICE_KEYS, INTERACT_KEYS, VIEW_KEYS } from './input'
 import { Inventory } from './Inventory'
-import { resolve, shownThings, thingAhead, tileCenter } from './level'
+import { facingOf, resolve, shownThings, thingAhead, tileCenter, type Player } from './level'
 import { PostFX } from './PostFX'
-import type { Ctx, Item, Level, Line, State } from './types'
-import { World, type Player } from './World'
+import type { Ctx, Item, Level, Line, Look, State, View } from './types'
+import { World } from './World'
 
-/** Screen pixels per tile. */
-const ZOOM = 48
+/** Rendered lines of vertical resolution; the canvas is scaled up with crisp pixels. */
+const RENDER_LINES = 240
 
-const EMPTY: State = { flags: {}, items: new Set() }
+const EMPTY: State = { flags: {}, items: new Set(), view: 'top' }
+const DEFAULT_PLAYER: Look = { color: '#ffffff' }
+
+/** Device-pixel ratio that renders `RENDER_LINES` lines at the window's height. */
+function useLowResDpr(): number {
+  const [dpr, setDpr] = useState(() => RENDER_LINES / window.innerHeight)
+  useEffect(() => {
+    const onResize = () => setDpr(RENDER_LINES / window.innerHeight)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return dpr
+}
 
 function opening(level: Level, state: State): Dialogue | null {
   const ls = level.enter ? resolve(level.enter, state) : []
@@ -29,14 +41,18 @@ type Props = {
   levels: Record<string, Level>
   items: Record<string, Item>
   start: string
+  /** How the player looks in top-down. Defaults to a white box. */
+  player?: Look
 }
 
-/** Owns game state: current level, story state, open dialogue, and the player. */
-export function Game({ levels, items, start }: Props) {
+/** Owns game state: current level, story state, open dialogue, view, and the player. */
+export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const [level, setLevel] = useState(() => levelById(levels, start))
   const [state, setState] = useState(EMPTY)
   const [dialogue, setDialogue] = useState(() => opening(level, EMPTY))
-  const playerRef = useRef<Player>({ pos: tileCenter(level.spawn), facing: { x: 0, y: 1 } })
+  const [viewTarget, setViewTarget] = useState<View>('top')
+  const playerRef = useRef<Player>({ pos: tileCenter(level.spawn), yaw: Math.PI })
+  const dpr = useLowResDpr()
   const things = shownThings(level, state)
 
   useEffect(() => {
@@ -77,6 +93,10 @@ export function Game({ levels, items, start }: Props) {
 
     const onKey = (e: KeyboardEvent) => {
       const now = performance.now()
+      if (VIEW_KEYS[e.code] && !dialogue && !e.repeat) {
+        e.preventDefault()
+        return setViewTarget((v) => (v === '3d' ? 'top' : '3d'))
+      }
       const choices = dialogue ? choicesOf(dialogue.lines[dialogue.index], current) : []
       const step = CHOICE_KEYS[e.code]
       if (dialogue && step && choices.length > 0 && fullyRevealed(dialogue, now)) {
@@ -96,7 +116,7 @@ export function Game({ levels, items, start }: Props) {
         return start([], dialogue.after)
       }
       const p = playerRef.current
-      const thing = thingAhead(shownThings(level, current), p.pos, p.facing)
+      const thing = thingAhead(shownThings(level, current), p.pos, facingOf(p.yaw))
       if (thing) start(resolve(thing.lines, current), thing.after ? [thing.after] : [])
     }
     window.addEventListener('keydown', onKey)
@@ -105,9 +125,24 @@ export function Game({ levels, items, start }: Props) {
 
   return (
     <div className="relative h-screen w-screen bg-black">
-      <Canvas orthographic flat gl={{ antialias: false }} camera={{ zoom: ZOOM, position: [0, 0, 10] }}>
-        <World level={level} things={things} playerRef={playerRef} paused={dialogue !== null} />
-        <PostFX level={level} things={things} state={state} playerRef={playerRef} />
+      <Canvas
+        flat
+        dpr={dpr}
+        gl={{ antialias: false }}
+        camera={{ fov: 10, near: 0.05, far: 300 }}
+        className="[image-rendering:pixelated]"
+      >
+        <World
+          level={level}
+          things={things}
+          state={state}
+          playerRef={playerRef}
+          playerLook={player}
+          paused={dialogue !== null}
+          viewTarget={viewTarget}
+          onView={(view) => setState((s) => ({ ...s, view }))}
+        />
+        <PostFX effects={level.effects ? resolve(level.effects, state) : {}} />
       </Canvas>
       <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}

@@ -3,6 +3,15 @@ import type { Dyn, Level, State, Thing, Vec } from './types'
 /** Player hitbox edge, in tiles. */
 export const PLAYER_SIZE = 0.7
 
+export type Player = {
+  pos: Vec
+  /** Radians clockwise from north (map -y). */
+  yaw: number
+}
+
+/** Unit map-space direction for a yaw. */
+export const facingOf = (yaw: number): Vec => ({ x: Math.sin(yaw), y: -Math.cos(yaw) })
+
 type Box = { x: number; y: number; w: number; h: number }
 
 /** Validates a level at load time so map typos fail loudly instead of rendering wrong. */

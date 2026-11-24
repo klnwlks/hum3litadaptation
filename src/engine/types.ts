@@ -1,5 +1,11 @@
-/** World units are tiles: 1 unit = 1 tile, origin at the map's top-left, y grows downward. */
+/**
+ * Map units are tiles: 1 unit = 1 tile, origin at the map's top-left, y grows downward (south).
+ * In 3D the map lies on the floor: tile (x, y) is world (x, height, y).
+ */
 export type Vec = { x: number; y: number }
+
+/** Top-down overview, or first-person 3D. */
+export type View = 'top' | '3d'
 
 export type FlagValue = boolean | number | string
 export type Flags = Readonly<Record<string, FlagValue>>
@@ -9,6 +15,8 @@ export interface State {
   flags: Flags
   /** Held item ids, in pickup order. */
   items: ReadonlySet<string>
+  /** Current view; flips halfway through the camera tilt. */
+  view: View
 }
 
 export type Cond = (state: State) => boolean
@@ -44,8 +52,9 @@ export type Line = string | { speaker?: string; text: string; choices?: Choice[]
 export type Lines = Dyn<Line[]>
 
 /**
- * Drawn as `image` (a URL, e.g. a file in public/) stretched over the footprint when given,
- * else as a `color` square. `color` also shows while the image loads.
+ * Drawn as `image` (a URL, e.g. a file in public/) when given, else as a flat `color`. `color` also
+ * shows while the image loads. Things stretch the image over their footprint; tiles repeat it once
+ * per tile on every side, so tall walls tile it vertically.
  */
 export interface Look {
   color: string
@@ -55,8 +64,14 @@ export interface Look {
 /** How a held item looks in the inventory strip. */
 export type Item = Look
 
+export type Side = 'n' | 'e' | 's' | 'w'
+
 export interface Tile extends Look {
   solid?: boolean
+  /** Solid tiles only: per-side looks seen in 3D (`n` faces up the map). Unset sides use the tile's look. */
+  faces?: Partial<Record<Side, Look>>
+  /** Non-solid tiles only: overrides the level's ceiling look above this tile (3D only). */
+  ceiling?: Look
 }
 
 /**
@@ -101,11 +116,19 @@ export interface Thing extends Look {
   /** Unique within the level; `pickup`/`door` also use it as a flag name, so keep those unique across levels. */
   id: string
   at: Vec
-  /** Defaults to 1x1. */
+  /** Footprint in tiles. Defaults to 1x1. */
   size?: Vec
+  /** Height in 3D, in tiles. Defaults to 1. Images become upright sprites facing the camera in 3D. */
+  height?: number
+  /** Distance from floor to the thing's bottom in 3D, e.g. to hang it from the ceiling. Defaults to 0. */
+  elevation?: number
   /** Blocks movement. Defaults to true. */
   solid?: boolean
-  /** Hidden things neither render, collide, nor interact. Defaults to always shown. */
+  /**
+   * Hidden things neither render, collide, nor interact. Defaults to always shown.
+   * Use `state.view` for things that exist in only one view; make those `solid: false` unless walls
+   * that only exist in one view are the point.
+   */
   shown?: Cond
   /** Dialogue shown on interaction. An empty list skips straight to `after`. */
   lines: Lines
@@ -126,4 +149,6 @@ export interface Level {
   enter?: Lines
   lighting?: Dyn<Lighting>
   effects?: Dyn<Effects>
+  /** Seen only in 3D; `height` is the wall and ceiling height in tiles. Defaults to near-black, 1.5. */
+  ceiling?: Look & { height?: number }
 }
