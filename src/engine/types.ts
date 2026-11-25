@@ -25,6 +25,8 @@ export interface Ctx {
   take(item: string): void
   goto(level: string, at?: Vec): void
   play(src: string, volume?: number): void
+  // Forces the camera to tilt to `view`, even if the player is mid-tilt.
+  view(view: View): void
   // Replaces any open dialogue.
   say(lines: Lines): void
   // Waits for open dialogue to close; `fn` gets the ctx current when it runs.

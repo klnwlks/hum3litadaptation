@@ -104,6 +104,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         setDialogue(opened)
       },
       play: playOnce,
+      view: setViewTarget,
       say: (ls) => start(resolve(ls, current), []),
       wait(seconds, fn) {
         const id = window.setTimeout(() => {

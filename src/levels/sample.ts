@@ -54,6 +54,15 @@ export const sample = defineLevel({
         wait(5, (ctx) => ctx.say([{ speaker: 'Ipsum', text: 'sample timer dialogue test' }]))
       },
     },
+    {
+      at: { x: 1, y: 8 },
+      when: (s) => !s.flags.forcedView,
+      enter: ({ set, view, say }) => {
+        set('forcedView', true)
+        view('3d')
+        say(['sample forced perspective test'])
+      },
+    },
   ],
   things: [
     {
