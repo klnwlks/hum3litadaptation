@@ -150,6 +150,7 @@ export const sample = defineLevel({
       at: { x: 5, y: 4 },
       color: '#444444',
       image: '/favicon.svg',
+      imageTop: [square('#c00000'), square('#0000c0')],
       blink: 1,
       height: 0.8,
       lines: [{ speaker: 'Ipsum', image: '/favicon.svg', text: 'sample image dialogue test' }],

@@ -48,7 +48,7 @@ A thing is:
 | ----------- | ------- |
 | `id`        | Unique within the level. |
 | `at`        | Top-left tile. `size` (footprint) defaults to `{ x: 1, y: 1 }`. |
-| `color`, `image` | Its look. Plain things are boxes. Image things lie flat in top-down and stand as camera-facing sprites in 3D. |
+| `color`, `image`, `imageTop` | Its look. Plain things are boxes. Image things lie flat in top-down and stand as camera-facing sprites in 3D. `imageTop` replaces `image` in top-down only (a thing with just `imageTop` is a box in 3D). |
 | `height`    | Height in 3D, default 1. From above, a tall thing is just a square. |
 | `elevation` | Height of its bottom in 3D, default 0. Use it to hang things from the ceiling. |
 | `solid`     | Blocks movement; default `true`. Non-solid things trigger when stood on. |

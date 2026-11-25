@@ -67,6 +67,8 @@ export interface Emitter extends Sound {
 export interface Look {
   color: string
   image?: Frames
+  // Replaces `image` in the top-down view.
+  imageTop?: Frames
   // Default 8.
   fps?: number
 }

@@ -113,12 +113,12 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
         </Blink>
       ))}
       <group ref={body}>
-        {playerLook.image ? (
+        {playerLook.image ?? playerLook.imageTop ? (
           <mesh
             position-y={PLAYER_HEIGHT}
             rotation-x={-Math.PI / 2}
             geometry={plane(PLAYER_SIZE, PLAYER_SIZE)}
-            material={litMaterial(playerLook, 'sprite')}
+            material={litMaterial(topLook(playerLook), 'sprite')}
           />
         ) : (
           <mesh position-y={PLAYER_HEIGHT / 2} geometry={box(PLAYER_SIZE, PLAYER_HEIGHT, PLAYER_SIZE)} material={litMaterial(playerLook, 'stretch')} />
@@ -126,6 +126,11 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
       </group>
     </>
   )
+}
+
+// The look to draw flat from above.
+function topLook(look: Look): Look {
+  return look.imageTop ? { ...look, image: look.imageTop } : look
 }
 
 function TileMesh({ x, y, tile, ceiling, height }: { x: number; y: number; tile: Level['tiles'][string]; ceiling: Look; height: number }) {
@@ -169,12 +174,12 @@ function ThingMesh({ thing, view }: { thing: Thing; view: View }) {
   const bottom = thing.elevation ?? 0
   const x = thing.at.x + size.x / 2
   const z = thing.at.y + size.y / 2
+  if (view === 'top' && (thing.image || thing.imageTop))
+    return (
+      <mesh position={[x, bottom + height, z]} rotation-x={-Math.PI / 2} geometry={plane(size.x, size.y)} material={litMaterial(topLook(thing), 'sprite')} />
+    )
   if (!thing.image)
     return <mesh position={[x, bottom + height / 2, z]} geometry={box(size.x, height, size.y)} material={litMaterial(thing, 'stretch')} />
-  if (view === 'top')
-    return (
-      <mesh position={[x, bottom + height, z]} rotation-x={-Math.PI / 2} geometry={plane(size.x, size.y)} material={litMaterial(thing, 'sprite')} />
-    )
   return <Sprite x={x} z={z} bottom={bottom} width={size.x} height={height} look={thing} />
 }
 
