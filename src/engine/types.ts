@@ -42,7 +42,7 @@ export interface Choice {
 // A list of images loops at 8 fps.
 export type Frames = string | string[]
 
-export type Line = string | { speaker?: string; portrait?: Frames; sound?: string; text: string; choices?: Choice[] }
+export type Line = string | { speaker?: string; portrait?: Frames; image?: Frames; sound?: string; text: string; choices?: Choice[] }
 export type Lines = Dyn<Line[]>
 
 export interface Sound {

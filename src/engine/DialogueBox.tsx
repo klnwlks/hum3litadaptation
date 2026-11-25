@@ -1,45 +1,74 @@
-import { useEffect, useState } from 'react'
-import { fullyRevealed, lineText, revealed, type Dialogue } from './dialogue'
-import { Flipbook } from './Flipbook'
-import type { Choice } from './types'
+import { useEffect, useState } from "react";
+import { fullyRevealed, lineText, revealed, type Dialogue } from "./dialogue";
+import { Flipbook } from "./Flipbook";
+import type { Choice } from "./types";
 
-export function DialogueBox({ dialogue, choices }: { dialogue: Dialogue; choices: Choice[] }) {
-  const now = useTypewriterClock(dialogue)
-  const line = dialogue.lines[dialogue.index]
-  const speaker = typeof line === 'string' ? undefined : line.speaker
-  const portrait = typeof line === 'string' ? undefined : line.portrait
+export function DialogueBox({
+  dialogue,
+  choices,
+}: {
+  dialogue: Dialogue;
+  choices: Choice[];
+}) {
+  const now = useTypewriterClock(dialogue);
+  const line = dialogue.lines[dialogue.index];
+  const speaker = typeof line === "string" ? undefined : line.speaker;
+  const portrait = typeof line === "string" ? undefined : line.portrait;
+  const image = typeof line === "string" ? undefined : line.image;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">
-      <div className="flex w-full max-w-3xl gap-4 border-4 border-white bg-black p-4 font-mono text-lg leading-relaxed text-white">
-        {portrait && <Flipbook frames={portrait} className="size-24 shrink-0 object-contain [image-rendering:pixelated]" />}
-        <div className="min-w-0 flex-1">
-          {speaker && <h2 className="mb-1 font-bold">{speaker}</h2>}
-          <p>{lineText(line).slice(0, revealed(dialogue, now))}</p>
-          {fullyRevealed(dialogue, now) && choices.length > 0 && (
-            <ul className="mt-3">
-              {choices.map((c, i) => (
-                <li key={c.text} className={i === dialogue.choice ? 'bg-white px-2 text-black' : 'px-2'}>
-                  {c.text}
-                </li>
-              ))}
-            </ul>
+    <>
+      {image && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 pb-56">
+          <Flipbook
+            frames={image}
+            className="max-h-full max-w-full object-contain"
+          />
+        </div>
+      )}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">
+        <div className="flex w-full max-w-3xl gap-4 border-4 border-white bg-black p-4 font-mono text-lg leading-relaxed text-white">
+          {portrait && (
+            <Flipbook
+              frames={portrait}
+              className="size-24 shrink-0 object-contain [image-rendering:pixelated]"
+            />
           )}
+          <div className="min-w-0 flex-1">
+            {speaker && <h2 className="mb-1 font-bold">{speaker}</h2>}
+            <p>{lineText(line).slice(0, revealed(dialogue, now))}</p>
+            {fullyRevealed(dialogue, now) && choices.length > 0 && (
+              <ul className="mt-3">
+                {choices.map((c, i) => (
+                  <li
+                    key={c.text}
+                    className={
+                      i === dialogue.choice
+                        ? "bg-white px-2 text-black"
+                        : "px-2"
+                    }
+                  >
+                    {c.text}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  )
+    </>
+  );
 }
 
 function useTypewriterClock(dialogue: Dialogue): number {
-  const [now, setNow] = useState(() => performance.now())
-  const running = !fullyRevealed(dialogue, now)
+  const [now, setNow] = useState(() => performance.now());
+  const running = !fullyRevealed(dialogue, now);
   useEffect(() => {
-    if (!running) return
+    if (!running) return;
     let id = requestAnimationFrame(function tick(t) {
-      setNow(t)
-      id = requestAnimationFrame(tick)
-    })
-    return () => cancelAnimationFrame(id)
-  }, [running])
-  return now
+      setNow(t);
+      id = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [running]);
+  return now;
 }
