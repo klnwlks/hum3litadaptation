@@ -18,11 +18,8 @@ export function DialogueBox({
   return (
     <>
       {image && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 pb-56">
-          <Flipbook
-            frames={image}
-            className="max-h-full max-w-full object-contain"
-          />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+          <Flipbook frames={image} className="h-[60%] w-full object-contain" />
         </div>
       )}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">
