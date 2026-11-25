@@ -5,6 +5,7 @@ import { choicesOf, fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
 import { Flipbook } from './Flipbook'
 import { CHOICE_KEYS, INTERACT_KEYS, VIEW_KEYS } from './input'
+import { TouchControls } from './TouchControls'
 import { Inventory } from './Inventory'
 import { crushes, facingOf, patrolAt, placed, resolve, shownThings, thingAhead, tileCenter, type Player } from './level'
 import { PostFX } from './PostFX'
@@ -197,7 +198,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   })
 
   return (
-    <div className="relative h-screen w-screen bg-black">
+    <div className="relative h-dvh w-screen touch-none bg-black">
       <Canvas
         flat
         dpr={dpr}
@@ -223,6 +224,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
       )}
       {flash && <div className="pointer-events-none absolute inset-0" style={{ background: flash }} />}
       <Inventory held={state.items} items={items} />
+      <TouchControls />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}
     </div>
   )

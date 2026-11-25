@@ -23,7 +23,7 @@ export function DialogueBox({
           <Flipbook frames={image} className={`${full ? "h-full" : "h-[60%]"} w-full object-contain`} />
         </div>
       )}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6 pointer-coarse:pb-56">
         <div className="flex w-full max-w-3xl gap-4 border-4 border-white bg-black p-4 font-mono text-lg leading-relaxed text-white">
           {portrait && (
             <Flipbook
