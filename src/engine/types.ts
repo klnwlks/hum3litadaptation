@@ -27,6 +27,8 @@ export interface Ctx {
   play(src: string, volume?: number): void
   // Forces the camera to tilt to `view`, even if the player is mid-tilt.
   view(view: View): void
+  // Covers the whole screen (under any dialogue) until cleared; with `seconds`, clears itself. No args clears.
+  image(frames?: Frames, seconds?: number): void
   // Replaces any open dialogue.
   say(lines: Lines): void
   // Waits for open dialogue to close; `fn` gets the ctx current when it runs.
@@ -44,7 +46,10 @@ export interface Choice {
 // A list of images loops at 8 fps.
 export type Frames = string | string[]
 
-export type Line = string | { speaker?: string; portrait?: Frames; image?: Frames; sound?: string; text: string; choices?: Choice[] }
+// `full` stretches `image` over the whole screen instead of 60% of its height.
+export type Line =
+  | string
+  | { speaker?: string; portrait?: Frames; image?: Frames; full?: boolean; sound?: string; text: string; choices?: Choice[] }
 export type Lines = Dyn<Line[]>
 
 export interface Sound {

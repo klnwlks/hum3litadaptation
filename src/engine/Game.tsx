@@ -3,11 +3,12 @@ import { useEffect, useRef, useState } from 'react'
 import { playOnce, unlockAudio } from './audio'
 import { choicesOf, fullyRevealed, type Dialogue } from './dialogue'
 import { DialogueBox } from './DialogueBox'
+import { Flipbook } from './Flipbook'
 import { CHOICE_KEYS, INTERACT_KEYS, VIEW_KEYS } from './input'
 import { Inventory } from './Inventory'
 import { facingOf, resolve, shownThings, thingAhead, tileCenter, type Player } from './level'
 import { PostFX } from './PostFX'
-import type { Ctx, Item, Level, Line, Look, State, View } from './types'
+import type { Ctx, Frames, Item, Level, Line, Look, State, View } from './types'
 import { World } from './World'
 
 const RENDER_LINES = 240
@@ -48,6 +49,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const [state, setState] = useState(EMPTY)
   const [dialogue, setDialogue] = useState(() => opening(level, EMPTY))
   const [viewTarget, setViewTarget] = useState<View>('top')
+  const [backdrop, setBackdrop] = useState<Frames>()
   const playerRef = useRef<Player>({ pos: tileCenter(level.spawn), yaw: Math.PI })
   const dpr = useLowResDpr()
   const things = shownThings(level, state)
@@ -105,6 +107,15 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
       },
       play: playOnce,
       view: setViewTarget,
+      image(frames, seconds) {
+        setBackdrop(frames)
+        if (!frames || seconds === undefined) return
+        const id = window.setTimeout(() => {
+          timers.current.delete(id)
+          setBackdrop((now) => (now === frames ? undefined : now))
+        }, seconds * 1000)
+        timers.current.add(id)
+      },
       say: (ls) => start(resolve(ls, current), []),
       wait(seconds, fn) {
         const id = window.setTimeout(() => {
@@ -184,6 +195,9 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         />
         <PostFX effects={level.effects ? resolve(level.effects, state) : {}} />
       </Canvas>
+      {backdrop && (
+        <Flipbook frames={backdrop} className="pointer-events-none absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]" />
+      )}
       <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}
     </div>

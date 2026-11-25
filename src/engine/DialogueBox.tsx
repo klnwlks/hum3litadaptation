@@ -15,11 +15,12 @@ export function DialogueBox({
   const speaker = typeof line === "string" ? undefined : line.speaker;
   const portrait = typeof line === "string" ? undefined : line.portrait;
   const image = typeof line === "string" ? undefined : line.image;
+  const full = typeof line === "string" ? false : line.full;
   return (
     <>
       {image && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
-          <Flipbook frames={image} className="h-[60%] w-full object-contain" />
+        <div className={`pointer-events-none absolute inset-0 flex items-center justify-center ${full ? "" : "p-6"}`}>
+          <Flipbook frames={image} className={`${full ? "h-full" : "h-[60%]"} w-full object-contain`} />
         </div>
       )}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-6">

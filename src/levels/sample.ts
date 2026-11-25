@@ -63,6 +63,15 @@ export const sample = defineLevel({
         say(['sample forced perspective test'])
       },
     },
+    {
+      at: { x: 6, y: 8 },
+      when: (s) => !s.flags.fullShown,
+      enter: ({ set, say, image }) => {
+        set('fullShown', true)
+        image('/favicon.svg', 3)
+        say([{ speaker: 'Ipsum', image: '/favicon.svg', full: true, text: 'sample full image dialogue test' }])
+      },
+    },
   ],
   things: [
     {
