@@ -55,6 +55,7 @@ A thing is:
 | `shown`     | `(state) => boolean`; hidden things don't render, collide, light, sound, or interact. Use `state.view` for things that exist in only one view; make those `solid: false` unless a wall that exists in only one view is the point. |
 | `lines`     | `Dyn<Line[]>`. |
 | `after`     | `(ctx) => void`, runs when the conversation ends. |
+| `patrol`    | `{ every, to }`: every `every` seconds it jumps (no tweening) to the next tile in `[at, ...to]`, looping. Pauses during dialogue; a solid thing skips a jump that would land on the player. |
 | `blink`     | Seconds visible, then the same hidden, forever. Visual only: it still collides and interacts. |
 | `light`     | `Dyn<Light \| undefined>`: `{ color?, intensity?, radius?, flicker?, blink? }` (`blink`: seconds on, then the same off). |
 | `sound`     | `Dyn<{ src, volume?, radius? } \| undefined>`: looping sound that fades to silence at `radius` (default 6) and pans left/right by where it is relative to you. |

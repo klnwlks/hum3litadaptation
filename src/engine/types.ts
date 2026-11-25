@@ -126,6 +126,9 @@ export interface Thing extends Look {
   // Seconds visible, then the same hidden, hard cuts. Visual only: it still collides and interacts.
   blink?: number
   solid?: boolean
+  // Every `every` seconds it jumps (no tweening) to the next tile in [at, ...to], looping. Pauses during dialogue;
+  // a solid thing skips a jump that would land on the player.
+  patrol?: { every: number; to: Vec[] }
   // Hidden things don't render, collide, light, sound, or interact.
   shown?: Cond
   lines: Lines

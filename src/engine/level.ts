@@ -43,6 +43,17 @@ const boxOf = (t: Thing): Box => ({ x: t.at.x, y: t.at.y, w: t.size?.x ?? 1, h: 
 
 const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
 
+const playerBox = (center: Vec): Box => ({ x: center.x - PLAYER_SIZE / 2, y: center.y - PLAYER_SIZE / 2, w: PLAYER_SIZE, h: PLAYER_SIZE })
+
+export const patrolAt = (t: Thing, step: number): Vec => (t.patrol ? [t.at, ...t.patrol.to][step % (t.patrol.to.length + 1)] : t.at)
+
+// `steps` counts each patrolling thing's jumps, by id.
+export const placed = (things: Thing[], steps: Readonly<Record<string, number>>): Thing[] =>
+  things.map((t) => (t.patrol ? { ...t, at: patrolAt(t, steps[t.id] ?? 0) } : t))
+
+export const crushes = (t: Thing, at: Vec, player: Vec): boolean =>
+  (t.solid ?? true) && overlaps(boxOf({ ...t, at }), playerBox(player))
+
 const contains = (b: Box, p: Vec) => p.x >= b.x && p.x < b.x + b.w && p.y >= b.y && p.y < b.y + b.h
 
 // Outside the map counts as solid.
@@ -52,8 +63,7 @@ function solidTile(level: Level, tx: number, ty: number): boolean {
 }
 
 function blocked(level: Level, things: Thing[], center: Vec): boolean {
-  const half = PLAYER_SIZE / 2
-  const box = { x: center.x - half, y: center.y - half, w: PLAYER_SIZE, h: PLAYER_SIZE }
+  const box = playerBox(center)
   for (let ty = Math.floor(box.y); ty < Math.ceil(box.y + box.h); ty++)
     for (let tx = Math.floor(box.x); tx < Math.ceil(box.x + box.w); tx++) if (solidTile(level, tx, ty)) return true
   return things.some((t) => (t.solid ?? true) && overlaps(box, boxOf(t)))

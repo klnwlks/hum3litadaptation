@@ -155,6 +155,14 @@ export const sample = defineLevel({
       lines: [{ speaker: 'Ipsum', image: '/favicon.svg', text: 'sample image dialogue test' }],
     },
     {
+      id: 'patrol',
+      at: { x: 9, y: 3 },
+      color: '#8a8a8a',
+      height: 0.6,
+      patrol: { every: 1, to: [{ x: 10, y: 3 }, { x: 11, y: 3 }, { x: 11, y: 4 }] },
+      lines: [SAMPLE],
+    },
+    {
       id: 'd',
       at: { x: 14, y: 8 },
       color: '#1f6a3a',

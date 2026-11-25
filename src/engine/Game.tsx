@@ -6,7 +6,7 @@ import { DialogueBox } from './DialogueBox'
 import { Flipbook } from './Flipbook'
 import { CHOICE_KEYS, INTERACT_KEYS, VIEW_KEYS } from './input'
 import { Inventory } from './Inventory'
-import { facingOf, resolve, shownThings, thingAhead, tileCenter, type Player } from './level'
+import { crushes, facingOf, patrolAt, placed, resolve, shownThings, thingAhead, tileCenter, type Player } from './level'
 import { PostFX } from './PostFX'
 import type { Ctx, Frames, Item, Level, Line, Look, State, View } from './types'
 import { World } from './World'
@@ -53,7 +53,8 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const [backdrop, setBackdrop] = useState<Frames>()
   const playerRef = useRef<Player>({ pos: tileCenter(level.spawn), yaw: Math.PI })
   const dpr = useLowResDpr()
-  const things = shownThings(level, state)
+  const [steps, setSteps] = useState<Record<string, number>>({})
+  const things = placed(shownThings(level, state), steps)
   // Latest ctx, for timers and triggers that fire outside key handling.
   const ctxRef = useRef<Ctx | null>(null)
   const timers = useRef(new Set<number>())
@@ -75,6 +76,19 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   const drain = () => {
     while (!dialogueOpen.current && ctxRef.current && queued.current.length > 0) queued.current.shift()!(ctxRef.current)
   }
+
+  useEffect(() => {
+    const ids = level.things.flatMap((t) => {
+      const patrol = t.patrol
+      if (!patrol) return []
+      const jump = (s: typeof steps) => {
+        const next = (s[t.id] ?? 0) + 1
+        return crushes(t, patrolAt(t, next), playerRef.current.pos) ? s : { ...s, [t.id]: next }
+      }
+      return window.setInterval(() => dialogueOpen.current || setSteps(jump), patrol.every * 1000)
+    })
+    return () => ids.forEach(clearInterval)
+  }, [level])
 
   // Keyed on line position so skipping the typewriter doesn't replay it.
   const lines = dialogue?.lines
@@ -110,6 +124,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         const next = levelById(levels, id)
         playerRef.current = { ...playerRef.current, pos: tileCenter(at ?? next.spawn) }
         setLevel(next)
+        setSteps({})
         const opened = opening(next, current)
         dialogueOpen.current = opened !== null
         setDialogue(opened)
@@ -169,12 +184,12 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
         return start([], dialogue.after)
       }
       const p = playerRef.current
-      const thing = thingAhead(shownThings(level, current), p.pos, facingOf(p.yaw))
+      const thing = thingAhead(placed(shownThings(level, current), steps), p.pos, facingOf(p.yaw))
       if (thing) start(resolve(thing.lines, current), thing.after ? [thing.after] : [])
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [dialogue, items, level, levels, state])
+  }, [dialogue, items, level, levels, state, steps])
 
   // After the effect above, so drained timers get the fresh ctx.
   useEffect(() => {
