@@ -1,9 +1,9 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef, type RefObject } from 'react'
+import { useRef, type ReactNode, type RefObject } from 'react'
 import type { Group, Mesh, PerspectiveCamera } from 'three'
 import { playOnce, useSoundscape } from './audio'
 import { axes, useHeldKeys } from './input'
-import { facingOf, move, PLAYER_SIZE, type Player } from './level'
+import { blinkOn, facingOf, move, PLAYER_SIZE, type Player } from './level'
 import { useLighting } from './lighting'
 import { animateMaterials, box, litMaterial, plane } from './material'
 import type { Level, Look, Side, State, Thing, Trigger, View } from './types'
@@ -108,7 +108,9 @@ export function World({ level, things, state, playerRef, playerLook, paused, vie
         )),
       )}
       {things.map((t) => (
-        <ThingMesh key={t.id} thing={t} view={state.view} />
+        <Blink key={t.id} every={t.blink}>
+          <ThingMesh thing={t} view={state.view} />
+        </Blink>
       ))}
       <group ref={body}>
         {playerLook.image ? (
@@ -151,6 +153,14 @@ function TileMesh({ x, y, tile, ceiling, height }: { x: number; y: number; tile:
       />
     </>
   )
+}
+
+function Blink({ every, children }: { every?: number; children: ReactNode }) {
+  const ref = useRef<Group>(null)
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.visible = blinkOn(clock.elapsedTime, every)
+  })
+  return <group ref={ref}>{children}</group>
 }
 
 function ThingMesh({ thing, view }: { thing: Thing; view: View }) {

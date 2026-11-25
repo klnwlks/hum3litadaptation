@@ -66,8 +66,9 @@ export const sample = defineLevel({
     {
       at: { x: 6, y: 8 },
       when: (s) => !s.flags.fullShown,
-      enter: ({ set, say, image }) => {
+      enter: ({ set, say, image, flash }) => {
         set('fullShown', true)
+        flash('#ffffff', 3)
         image('/favicon.svg', 3)
         say([{ speaker: 'Ipsum', image: '/favicon.svg', full: true, text: 'sample full image dialogue test' }])
       },
@@ -105,7 +106,7 @@ export const sample = defineLevel({
       item: 'lorem',
       at: { x: 5, y: 7 },
       color: '#c0a040',
-      light: { color: '#c0a040', radius: 2, intensity: 0.6 },
+      light: { color: '#c0a040', radius: 2, intensity: 0.6, blink: 0.5 },
       lines: [SAMPLE],
     }),
     door({
@@ -149,6 +150,7 @@ export const sample = defineLevel({
       at: { x: 5, y: 4 },
       color: '#444444',
       image: '/favicon.svg',
+      blink: 1,
       height: 0.8,
       lines: [{ speaker: 'Ipsum', image: '/favicon.svg', text: 'sample image dialogue test' }],
     },

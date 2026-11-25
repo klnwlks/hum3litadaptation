@@ -27,6 +27,9 @@ export function defineLevel(level: Level): Level {
   return level
 }
 
+// Alternates on/off every `every` seconds; always on without it.
+export const blinkOn = (seconds: number, every?: number): boolean => !every || Math.floor(seconds / every) % 2 === 0
+
 export const tileCenter = (v: Vec): Vec => ({ x: v.x + 0.5, y: v.y + 0.5 })
 
 // `T` must not itself be a function.

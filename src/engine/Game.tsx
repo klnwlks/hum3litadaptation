@@ -12,6 +12,7 @@ import type { Ctx, Frames, Item, Level, Line, Look, State, View } from './types'
 import { World } from './World'
 
 const RENDER_LINES = 240
+const FLASH_MS = 90
 
 const EMPTY: State = { flags: {}, items: new Set(), view: 'top' }
 const DEFAULT_PLAYER: Look = { color: '#ffffff' }
@@ -56,6 +57,14 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
   // Latest ctx, for timers and triggers that fire outside key handling.
   const ctxRef = useRef<Ctx | null>(null)
   const timers = useRef(new Set<number>())
+  const [flash, setFlash] = useState<string>()
+  const later = (ms: number, fn: () => void) => {
+    const id = window.setTimeout(() => {
+      timers.current.delete(id)
+      fn()
+    }, ms)
+    timers.current.add(id)
+  }
   useEffect(() => {
     const pending = timers.current
     return () => pending.forEach(clearTimeout)
@@ -110,11 +119,10 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
       image(frames, seconds) {
         setBackdrop(frames)
         if (!frames || seconds === undefined) return
-        const id = window.setTimeout(() => {
-          timers.current.delete(id)
-          setBackdrop((now) => (now === frames ? undefined : now))
-        }, seconds * 1000)
-        timers.current.add(id)
+        later(seconds * 1000, () => setBackdrop((now) => (now === frames ? undefined : now)))
+      },
+      flash(color = '#ffffff', times = 1) {
+        for (let i = 0; i < times * 2; i++) later(i * FLASH_MS, () => setFlash(i % 2 === 0 ? color : undefined))
       },
       say: (ls) => start(resolve(ls, current), []),
       wait(seconds, fn) {
@@ -198,6 +206,7 @@ export function Game({ levels, items, start, player = DEFAULT_PLAYER }: Props) {
       {backdrop && (
         <Flipbook frames={backdrop} className="pointer-events-none absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]" />
       )}
+      {flash && <div className="pointer-events-none absolute inset-0" style={{ background: flash }} />}
       <Inventory held={state.items} items={items} />
       {dialogue && <DialogueBox dialogue={dialogue} choices={choicesOf(dialogue.lines[dialogue.index], state)} />}
     </div>

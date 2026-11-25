@@ -29,6 +29,8 @@ export interface Ctx {
   view(view: View): void
   // Covers the whole screen (under any dialogue) until cleared; with `seconds`, clears itself. No args clears.
   image(frames?: Frames, seconds?: number): void
+  // Hard-blinks the whole screen `times` times (default 1), default white.
+  flash(color?: string, times?: number): void
   // Replaces any open dialogue.
   say(lines: Lines): void
   // Waits for open dialogue to close; `fn` gets the ctx current when it runs.
@@ -87,6 +89,8 @@ export interface Light {
   // Max 30: shadow rays stop after 64 cells.
   radius?: number
   flicker?: number
+  // Seconds on, then the same off, hard cuts.
+  blink?: number
 }
 
 export interface Lighting {
@@ -119,6 +123,8 @@ export interface Thing extends Look {
   size?: Vec
   height?: number
   elevation?: number
+  // Seconds visible, then the same hidden, hard cuts. Visual only: it still collides and interacts.
+  blink?: number
   solid?: boolean
   // Hidden things don't render, collide, light, sound, or interact.
   shown?: Cond

@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, type RefObject } from 'react'
 import { Color, DataTexture, NearestFilter, RGBAFormat, Vector2, Vector3 } from 'three'
-import { resolve, type Player } from './level'
+import { blinkOn, resolve, type Player } from './level'
 import type { Level, Light, State, Thing, Vec } from './types'
 
 export const MAX_LIGHTS = 16
@@ -68,7 +68,7 @@ export function useLighting(level: Level, things: Thing[], state: State, playerR
   const map = useMemo(() => occupancy(level, things, state), [level, things, state])
   useEffect(() => () => map.dispose(), [map])
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     const u = lightingUniforms
     u.tMap.value = map
     u.uMapSize.value.set(map.image.width, map.image.height)
@@ -77,7 +77,7 @@ export function useLighting(level: Level, things: Thing[], state: State, playerR
     const count = Math.min(lights.length, MAX_LIGHTS)
     for (let i = 0; i < count; i++) {
       const { at, light } = lights[i]
-      scratchColor.set(light.color ?? '#ffffff').multiplyScalar((light.intensity ?? 1) * flickerScale(light.flicker ?? 0))
+      scratchColor.set(light.color ?? '#ffffff').multiplyScalar(blinkOn(clock.elapsedTime, light.blink) ? (light.intensity ?? 1) * flickerScale(light.flicker ?? 0) : 0)
       u.uLightPos.value[i].set(at.x, at.y, light.radius ?? 4)
       u.uLightColor.value[i].set(scratchColor.r, scratchColor.g, scratchColor.b)
     }
