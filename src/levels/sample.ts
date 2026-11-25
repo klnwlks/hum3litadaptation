@@ -1,7 +1,7 @@
 import { door, flag, has, pickup } from '../engine/helpers'
 import { defineLevel } from '../engine/level'
 
-const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.'
+const SAMPLE = 'sample dialogue test'
 const STEP = '/sounds/lorem-step.ogg'
 
 // Placeholder frames: plain colored squares.
@@ -33,7 +33,7 @@ export const sample = defineLevel({
   // Sound files aren't shipped; missing ones stay silent.
   ambience: { src: '/sounds/lorem-ambience.ogg', volume: 0.4 },
   spawn: { x: 3, y: 3 },
-  enter: [LOREM],
+  enter: [SAMPLE],
   lighting: (s) => ({ ambient: s.flags.dolor ? 0.04 : s.view === '3d' ? 0.08 : 0.15, player: { radius: 4 } }),
   fog: (s) => ({ distance: s.view === '3d' ? 6.5 : 11 }),
   effects: (s) => ({
@@ -50,8 +50,8 @@ export const sample = defineLevel({
       when: (s) => !s.flags.crossed,
       enter: ({ set, say, wait }) => {
         set('crossed', true)
-        say([LOREM])
-        wait(5, (ctx) => ctx.say([{ speaker: 'Ipsum', text: LOREM }]))
+        say(['sample step trigger test'])
+        wait(5, (ctx) => ctx.say([{ speaker: 'Ipsum', text: 'sample timer dialogue test' }]))
       },
     },
   ],
@@ -60,7 +60,7 @@ export const sample = defineLevel({
       id: 'a',
       at: { x: 1, y: 1 },
       color: '#7a1f1f',
-      lines: [{ speaker: 'Lorem', text: LOREM }, LOREM, { speaker: 'Ipsum', text: LOREM }],
+      lines: [{ speaker: 'Lorem', text: SAMPLE }, SAMPLE, { speaker: 'Ipsum', text: SAMPLE }],
       after: ({ play }) => play('/sounds/lorem-after.ogg'),
     },
     {
@@ -69,7 +69,7 @@ export const sample = defineLevel({
       color: '#202020',
       height: 1.4,
       lines: (s) =>
-        s.view === '3d' ? [{ speaker: 'Ipsum', portrait: '/favicon.svg', sound: '/sounds/lorem-sting.ogg', text: LOREM }] : [LOREM],
+        s.view === '3d' ? [{ speaker: 'Ipsum', portrait: '/favicon.svg', sound: '/sounds/lorem-sting.ogg', text: SAMPLE }] : [SAMPLE],
     },
     {
       id: 'hanging',
@@ -79,60 +79,67 @@ export const sample = defineLevel({
       height: 0.4,
       solid: false,
       shown: (s) => s.view === '3d',
-      lines: [LOREM],
+      lines: [SAMPLE],
     },
-    { id: 'flat', at: { x: 5, y: 2 }, color: '#2a4a2a', solid: false, shown: (s) => s.view === 'top', lines: [LOREM] },
+    { id: 'flat', at: { x: 5, y: 2 }, color: '#2a4a2a', solid: false, shown: (s) => s.view === 'top', lines: [SAMPLE] },
     pickup({
       id: 'sample.key',
       item: 'lorem',
       at: { x: 5, y: 7 },
       color: '#c0a040',
       light: { color: '#c0a040', radius: 2, intensity: 0.6 },
-      lines: [LOREM],
+      lines: [SAMPLE],
     }),
     door({
       id: 'sample.door',
       key: 'lorem',
       at: { x: 7, y: 4 },
       color: '#5a3a1a',
-      lines: [LOREM],
-      opened: [{ text: LOREM, sound: '/sounds/lorem-door.ogg' }, LOREM],
+      lines: [SAMPLE],
+      opened: [{ text: SAMPLE, sound: '/sounds/lorem-door.ogg' }, SAMPLE],
     }),
-    { id: 'b', at: { x: 9, y: 1 }, size: { x: 3, y: 1 }, color: '#1f3f7a', lines: [LOREM, LOREM] },
+    { id: 'b', at: { x: 9, y: 1 }, size: { x: 3, y: 1 }, color: '#1f3f7a', lines: [SAMPLE, SAMPLE] },
     {
       id: 'b2',
       at: { x: 13, y: 7 },
       color: '#7a6a1f',
-      lines: (s) => (s.flags.readB2 ? [LOREM] : [LOREM, LOREM, LOREM, LOREM]),
+      lines: (s) => (s.flags.readB2 ? [SAMPLE] : [SAMPLE, SAMPLE, SAMPLE, SAMPLE]),
       after: ({ set }) => set('readB2', true),
       light: (s) => (s.flags.readB2 ? undefined : { color: '#ffd080', radius: 5, flicker: 0.6 }),
       sound: (s) => (s.flags.readB2 ? undefined : { src: '/sounds/lorem-hum.ogg', radius: 6 }),
     },
-    pickup({ id: 'sample.c', item: 'ipsum', at: { x: 10, y: 5 }, color: '#5a1f7a', shown: flag('readB2'), lines: [LOREM] }),
+    pickup({ id: 'sample.c', item: 'ipsum', at: { x: 10, y: 5 }, color: '#5a1f7a', shown: flag('readB2'), lines: [SAMPLE] }),
     {
       id: 'e',
       at: { x: 9, y: 7 },
       color: '#7a1f5a',
       lines: [
-        LOREM,
+        SAMPLE,
         {
           speaker: 'Lorem',
-          text: LOREM,
+          text: SAMPLE,
           choices: [
-            { text: 'Lorem ipsum', lines: [LOREM] },
-            { text: 'Dolor sit', lines: [{ speaker: 'Ipsum', text: LOREM }, LOREM] },
-            { text: 'Amet consectetur', requires: has('ipsum'), lines: [LOREM], after: ({ set }) => set('dolor', true) },
+            { text: 'Lorem ipsum', lines: [SAMPLE] },
+            { text: 'Dolor sit', lines: [{ speaker: 'Ipsum', text: SAMPLE }, SAMPLE] },
+            { text: 'Amet consectetur', requires: has('ipsum'), lines: [SAMPLE], after: ({ set }) => set('dolor', true) },
           ],
         },
       ],
     },
-    { id: 'f', at: { x: 5, y: 4 }, color: '#444444', image: '/favicon.svg', height: 0.8, lines: [LOREM] },
+    {
+      id: 'f',
+      at: { x: 5, y: 4 },
+      color: '#444444',
+      image: '/favicon.svg',
+      height: 0.8,
+      lines: [{ speaker: 'Ipsum', image: '/favicon.svg', text: 'sample image dialogue test' }],
+    },
     {
       id: 'd',
       at: { x: 14, y: 8 },
       color: '#1f6a3a',
       solid: false,
-      lines: [LOREM],
+      lines: [SAMPLE],
       after: ({ goto }) => goto('sample', { x: 1, y: 3 }),
     },
   ],
